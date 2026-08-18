@@ -33,11 +33,6 @@ class ChatbotViewModel @Inject constructor() : ViewModel() {
     private val _isTyping = MutableStateFlow(false)
     val isTyping: StateFlow<Boolean> = _isTyping.asStateFlow()
 
-    private val mockTemp = 24.5
-    private val mockHumidity = 65.0
-    private val mockSoil = 58.0
-    private val mockLight = 7500.0
-
     val quickActions = listOf(
         QuickAction("System Status", "What is the current system status?"),
         QuickAction("Crop Advice", "What crops should I plant?"),
@@ -106,25 +101,18 @@ class ChatbotViewModel @Inject constructor() : ViewModel() {
     }
 
     private fun buildStatusResponse(id: String, timestamp: Long): ChatMessage {
-        val tempStatus = if (mockTemp in 20.0..30.0) "optimal" else "needs attention"
-        val humidityStatus = if (mockHumidity in 50.0..75.0) "optimal" else "needs attention"
-        val soilStatus = if (mockSoil in 40.0..70.0) "optimal" else "needs attention"
-
         return ChatMessage(
             id = id,
-            text = "Current greenhouse conditions:\n\n" +
-                    "Temperature: ${mockTemp}°C ($tempStatus)\n" +
-                    "Humidity: ${mockHumidity}% ($humidityStatus)\n" +
-                    "Soil Moisture: ${mockSoil}% ($soilStatus)\n" +
-                    "Light Intensity: ${mockLight.toInt()} lux\n\n" +
-                    "Overall, your greenhouse is in good condition.",
+            text = "Live sensor data isn't connected yet.\n\n" +
+                    "Once your greenhouse sensors are linked, I'll be able to show temperature, humidity, soil moisture, and sunlight intensity readings here.\n\n" +
+                    "You can still ask me for general growing advice in the meantime.",
             sender = "bot",
             timestamp = timestamp,
             isAnalysis = true,
             recommendations = listOf(
-                "Continue monitoring temperature levels",
-                "Maintain current irrigation schedule",
-                "Check light exposure during cloudy days"
+                "Connect your sensor hub to enable live monitoring",
+                "Keep sensors calibrated for accurate readings",
+                "Check device connections regularly"
             )
         )
     }
@@ -132,12 +120,12 @@ class ChatbotViewModel @Inject constructor() : ViewModel() {
     private fun buildCropResponse(id: String, timestamp: Long): ChatMessage {
         return ChatMessage(
             id = id,
-            text = "Based on current conditions (temp=${mockTemp}°C, humidity=${mockHumidity}%, light=${mockLight.toInt()} lux), " +
-                    "these crops would thrive in your greenhouse:\n\n" +
-                    "Tomatoes - Excellent match for current temperature\n" +
-                    "Lettuce - Good humidity levels support leafy growth\n" +
-                    "Basil - Light intensity is ideal for herbs\n" +
-                    "Peppers - Temperature is within optimal range",
+            text = "Once your sensors are connected, I can recommend crops based on your current greenhouse conditions.\n\n" +
+                    "In the meantime, these crops are commonly suited to greenhouse growing:\n\n" +
+                    "Tomatoes - warm-season crop, great for greenhouses\n" +
+                    "Lettuce - grows well in cooler greenhouse conditions\n" +
+                    "Basil - thrives with consistent warmth and light\n" +
+                    "Peppers - do well in warm, humid environments",
             sender = "bot",
             timestamp = timestamp,
             recommendations = listOf(
@@ -150,50 +138,32 @@ class ChatbotViewModel @Inject constructor() : ViewModel() {
     }
 
     private fun buildSoilResponse(id: String, timestamp: Long): ChatMessage {
-        val status = when {
-            mockSoil < 40 -> "dry and needs watering"
-            mockSoil in 40.0..70.0 -> "at optimal levels"
-            else -> "too wet, reduce watering"
-        }
-
         return ChatMessage(
             id = id,
-            text = "Soil Moisture Analysis:\n\n" +
-                    "Current reading: ${mockSoil}%\n" +
-                    "Status: $status\n\n" +
-                    "The ideal soil moisture range is 40-70% for most greenhouse crops. " +
-                    "Your current level is ${if (mockSoil in 40.0..70.0) "within" else "outside"} the optimal range.",
+            text = "Live soil moisture data isn't connected yet.\n\n" +
+                    "The ideal soil moisture range is 40-70% for most greenhouse crops. Once your moisture sensor is linked, I can analyze your current reading and recommend watering adjustments.",
             sender = "bot",
             timestamp = timestamp,
             isAnalysis = true,
             recommendations = listOf(
-                if (mockSoil < 40) "Increase irrigation frequency" else if (mockSoil > 70) "Reduce irrigation frequency" else "Maintain current irrigation schedule",
                 "Water early morning for best absorption",
                 "Use mulch to retain soil moisture",
-                "Check drainage to prevent waterlogging"
+                "Check drainage to prevent waterlogging",
+                "Calibrate the moisture sensor after installation"
             )
         )
     }
 
     private fun buildTemperatureResponse(id: String, timestamp: Long): ChatMessage {
-        val tempStatus = when {
-            mockTemp < 18 -> "below optimal range"
-            mockTemp in 18.0..28.0 -> "within optimal range"
-            else -> "above optimal range"
-        }
-
         return ChatMessage(
             id = id,
-            text = "Temperature Report:\n\n" +
-                    "Current: ${mockTemp}°C\n" +
-                    "Status: $tempStatus\n\n" +
-                    "Most greenhouse vegetables thrive between 18-28°C. " +
-                    "Night temperatures can safely drop to 15-18°C.",
+            text = "Live temperature data isn't connected yet.\n\n" +
+                    "Most greenhouse vegetables thrive between 18-28°C. Once your temperature sensor is linked, I can compare your current reading against this optimal range and suggest adjustments.",
             sender = "bot",
             timestamp = timestamp,
             isAnalysis = true,
             recommendations = listOf(
-                if (mockTemp > 28) "Open vents to reduce temperature" else if (mockTemp < 18) "Close vents and consider heating" else "Temperature is ideal, maintain current ventilation",
+                "Maintain good ventilation to avoid overheating",
                 "Monitor for sudden temperature fluctuations",
                 "Use shade cloth during peak sun hours"
             )
@@ -204,10 +174,10 @@ class ChatbotViewModel @Inject constructor() : ViewModel() {
         return ChatMessage(
             id = id,
             text = "Growth Optimization Tips:\n\n" +
-                    "Based on your current sensor data, here are recommendations for maximizing crop growth:\n\n" +
-                    "Light: Your ${mockLight.toInt()} lux reading is good for vegetative growth.\n" +
-                    "Temperature: ${mockTemp}°C supports steady growth rates.\n" +
-                    "Humidity: ${mockHumidity}% is ideal for transpiration.",
+                    "Once your sensors are connected, I can tailor these tips to your greenhouse's actual conditions.\n\n" +
+                    "• Keep temperature between 18-28°C for most crops\n" +
+                    "• Maintain soil moisture around 40-70%\n" +
+                    "• Ensure good ventilation for healthy transpiration",
             sender = "bot",
             timestamp = timestamp,
             recommendations = listOf(
@@ -224,20 +194,14 @@ class ChatbotViewModel @Inject constructor() : ViewModel() {
         return ChatMessage(
             id = id,
             text = "System Status:\n\n" +
-                    "All sensors are operational and transmitting data.\n\n" +
-                    "Sensor Readings:\n" +
-                    "Temperature Sensor: Active (${mockTemp}°C)\n" +
-                    "Humidity Sensor: Active (${mockHumidity}%)\n" +
-                    "Soil Moisture Sensor: Active (${mockSoil}%)\n" +
-                    "Light Sensor: Active (${mockLight.toInt()} lux)\n\n" +
-                    "Irrigation System: Standby\n" +
-                    "Ventilation: Active",
+                    "Live device and sensor data isn't connected yet.\n\n" +
+                    "Once connected, I'll show the status of your temperature, humidity, soil moisture, and light sensors, along with the irrigation and ventilation systems.",
             sender = "bot",
             timestamp = timestamp,
             isAnalysis = true,
             recommendations = listOf(
-                "Calibrate soil moisture sensor monthly",
-                "Clean light sensor lens quarterly",
+                "Calibrate soil moisture sensor after setup",
+                "Clean light sensor lens periodically",
                 "Check irrigation lines for blockages",
                 "Update firmware when available"
             )

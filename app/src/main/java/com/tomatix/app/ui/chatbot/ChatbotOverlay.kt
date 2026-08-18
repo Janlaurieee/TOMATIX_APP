@@ -268,7 +268,7 @@ private fun QuickActionChip(label: String, onClick: () -> Unit) {
 private fun MessageBubble(message: ChatMessage) {
     val isUser = message.sender == "user"
     val alignment: Alignment.Horizontal =
-        if (isUser) Alignment.CenterEnd as Alignment.Horizontal else Alignment.CenterStart as Alignment.Horizontal
+        if (isUser) Alignment.End else Alignment.Start
 
     Column(
         modifier = Modifier.fillMaxWidth(),

@@ -11,7 +11,7 @@ Runs on **Android Studio** using **Material 3** design with the signature green 
 ## Features
 
 ### 📊 Dashboard
-- **Live sensor cards** — Temperature, Humidity, Soil Moisture, Light Intensity
+- **Live sensor cards** — Temperature, Humidity, Soil Moisture, Sunlight Intensity (measures sun intensity inside the greenhouse)
   - Color-coded icons (orange/blue/green/yellow)
   - Ideal range indicators + trend arrows (up / down / stable)
   - Status badges & progress bars for optimal-range detection
@@ -19,18 +19,16 @@ Runs on **Android Studio** using **Material 3** design with the signature green 
 - **24-Hour Trends** — historical sensor chart with legend
 
 ### 🎛️ Controls
-- **Manual / Automatic mode toggle**
 - **Chemical Distribution System** — chemical type selector (Fertilizer, Pesticide, Herbicide, Fungicide), mixing time, concentration slider, live countdown timer, and distribution controls with safety guidelines
 - **Camera Module** — live feed placeholder, zoom slider, snapshot/refresh, pan controls
 - **Water Pump / Irrigation / Exhaust Fan** — on/off switches + speed sliders & quick cycle actions
-- **Grow Lights** — Sunrise / Full Sun / Sunset / Night modes
 - **Emergency Controls** — Emergency Stop All + Reset to Default
 
 ### ⚙️ Settings
 - **Thresholds** — set min/max acceptable ranges for each sensor
 - **Analytics** — Day/Week/Month/Year range charts with avg/max/min stats
 - **Notifications** — email, push, SMS, and critical-only preferences
-- **System Logs** — color-coded activity log viewer
+- **System Logs** — activity log viewer (starts empty)
 
 ### 🤖 AI Chatbot
 - Floating assistant with quick actions
@@ -90,7 +88,7 @@ com.tomatix.app/
 3. Select your emulator/device
 4. Click **Run ▶**
 
-The app works immediately with **mock data** — no Firebase setup required to explore the UI.
+The app starts with **empty data** — sensor cards, trends, analytics, and logs show "No data" / `--` until live data arrives from Firebase Realtime Database.
 
 ### Build from command line
 ```bash

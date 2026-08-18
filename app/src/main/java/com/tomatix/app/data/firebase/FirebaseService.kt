@@ -14,13 +14,18 @@ import javax.inject.Singleton
 @Singleton
 class FirebaseService @Inject constructor() {
 
-    private val database = FirebaseDatabase.getInstance()
-    private val sensorsRef = database.getReference("sensors")
-    private val devicesRef = database.getReference("devices")
-    private val settingsRef = database.getReference("settings")
-    private val logsRef = database.getReference("logs")
+    private val database: FirebaseDatabase? = runCatching { FirebaseDatabase.getInstance() }.getOrNull()
+    private val sensorsRef get() = database?.getReference("sensors")
+    private val devicesRef get() = database?.getReference("devices")
+    private val settingsRef get() = database?.getReference("settings")
+    private val logsRef get() = database?.getReference("logs")
 
     fun getSensorData(): Flow<SensorData> = callbackFlow {
+        val ref = sensorsRef
+        if (ref == null) {
+            close()
+            return@callbackFlow
+        }
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val data = snapshot.getValue(SensorData::class.java)
@@ -33,11 +38,16 @@ class FirebaseService @Inject constructor() {
                 close(error.toException())
             }
         }
-        sensorsRef.addValueEventListener(listener)
-        awaitClose { sensorsRef.removeEventListener(listener) }
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
     }
 
     fun getDeviceStatus(): Flow<DeviceStatus> = callbackFlow {
+        val ref = devicesRef
+        if (ref == null) {
+            close()
+            return@callbackFlow
+        }
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val data = snapshot.getValue(DeviceStatus::class.java)
@@ -50,11 +60,16 @@ class FirebaseService @Inject constructor() {
                 close(error.toException())
             }
         }
-        devicesRef.addValueEventListener(listener)
-        awaitClose { devicesRef.removeEventListener(listener) }
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
     }
 
     fun getThresholdSettings(): Flow<ThresholdSettings> = callbackFlow {
+        val ref = settingsRef
+        if (ref == null) {
+            close()
+            return@callbackFlow
+        }
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val data = snapshot.child("thresholds").getValue(ThresholdSettings::class.java)
@@ -67,11 +82,16 @@ class FirebaseService @Inject constructor() {
                 close(error.toException())
             }
         }
-        settingsRef.addValueEventListener(listener)
-        awaitClose { settingsRef.removeEventListener(listener) }
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
     }
 
     fun getNotificationSettings(): Flow<NotificationSettings> = callbackFlow {
+        val ref = settingsRef
+        if (ref == null) {
+            close()
+            return@callbackFlow
+        }
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val data = snapshot.child("notifications").getValue(NotificationSettings::class.java)
@@ -84,11 +104,16 @@ class FirebaseService @Inject constructor() {
                 close(error.toException())
             }
         }
-        settingsRef.addValueEventListener(listener)
-        awaitClose { settingsRef.removeEventListener(listener) }
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
     }
 
     fun getLogs(): Flow<List<SystemLog>> = callbackFlow {
+        val ref = logsRef
+        if (ref == null) {
+            close()
+            return@callbackFlow
+        }
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val logs = mutableListOf<SystemLog>()
@@ -105,27 +130,27 @@ class FirebaseService @Inject constructor() {
                 close(error.toException())
             }
         }
-        logsRef.addValueEventListener(listener)
-        awaitClose { logsRef.removeEventListener(listener) }
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
     }
 
     suspend fun updateSensorData(data: SensorData) {
-        sensorsRef.setValue(data)
+        sensorsRef?.setValue(data)
     }
 
     suspend fun updateDeviceStatus(data: DeviceStatus) {
-        devicesRef.setValue(data)
+        devicesRef?.setValue(data)
     }
 
     suspend fun updateThresholdSettings(data: ThresholdSettings) {
-        settingsRef.child("thresholds").setValue(data)
+        settingsRef?.child("thresholds")?.setValue(data)
     }
 
     suspend fun updateNotificationSettings(data: NotificationSettings) {
-        settingsRef.child("notifications").setValue(data)
+        settingsRef?.child("notifications")?.setValue(data)
     }
 
     suspend fun addLog(log: SystemLog) {
-        logsRef.push().setValue(log)
+        logsRef?.push()?.setValue(log)
     }
 }

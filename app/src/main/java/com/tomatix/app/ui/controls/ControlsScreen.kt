@@ -1,6 +1,5 @@
 package com.tomatix.app.ui.controls
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -108,13 +107,6 @@ fun ControlsScreen(
         }
 
         item {
-            ManualModeAlert(
-                isManual = uiState.manualMode,
-                onToggle = viewModel::toggleManualMode
-            )
-        }
-
-        item {
             ChemicalDistributionCard(
                 uiState = uiState,
                 viewModel = viewModel
@@ -155,13 +147,6 @@ fun ControlsScreen(
         }
 
         item {
-            GrowLightsCard(
-                currentMode = uiState.growLightMode,
-                onModeChange = viewModel::setGrowLightMode
-            )
-        }
-
-        item {
             EmergencyControlsCard(
                 onStopAll = viewModel::stopAll,
                 onResetDefault = viewModel::resetToDefault
@@ -187,65 +172,6 @@ private fun HeaderSection() {
             color = Gray500,
             modifier = Modifier.padding(top = 4.dp)
         )
-    }
-}
-
-@Composable
-private fun ManualModeAlert(
-    isManual: Boolean,
-    onToggle: () -> Unit
-) {
-    val bgColor by animateColorAsState(
-        targetValue = if (isManual) Yellow500 else Gray200,
-        label = "manualModeBg"
-    )
-    val contentColor = if (isManual) Gray800 else Gray600
-
-    Card(
-        shape = cardShape,
-        colors = CardDefaults.cardColors(containerColor = bgColor),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Filled.Warning,
-                    contentDescription = null,
-                    tint = contentColor,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = "Manual Mode",
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp,
-                        color = contentColor
-                    )
-                    Text(
-                        text = if (isManual) "Override active" else "System auto-managed",
-                        fontSize = 12.sp,
-                        color = contentColor.copy(alpha = 0.7f)
-                    )
-                }
-            }
-            Switch(
-                checked = isManual,
-                onCheckedChange = { onToggle() },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = White,
-                    checkedTrackColor = Green600,
-                    uncheckedThumbColor = White,
-                    uncheckedTrackColor = Gray400
-                )
-            )
-        }
     }
 }
 
@@ -952,59 +878,6 @@ private fun ExhaustFanCard(
 }
 
 @Composable
-private fun GrowLightsCard(
-    currentMode: String,
-    onModeChange: (String) -> Unit
-) {
-    val modes = listOf("Sunrise", "Full Sun", "Sunset", "Night")
-    val modeColors = listOf(Yellow500, Orange500, Orange600, Blue500)
-
-    Card(
-        shape = cardShape,
-        colors = CardDefaults.cardColors(containerColor = White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            CardHeader(
-                title = "Grow Lights",
-                subtitle = "Adjust lighting mode",
-                iconColor = Yellow500
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                modes.forEachIndexed { index, mode ->
-                    val isActive = currentMode == mode
-                    val color = modeColors[index]
-
-                    Button(
-                        onClick = { onModeChange(mode) },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isActive) color else Gray100,
-                            contentColor = if (isActive) White else Gray600
-                        ),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Text(
-                            text = mode,
-                            fontSize = 12.sp,
-                            maxLines = 1,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun EmergencyControlsCard(
     onStopAll: () -> Unit,
     onResetDefault: () -> Unit
@@ -1091,7 +964,6 @@ private fun CardHeader(
                     "Water Pump" -> Icons.Filled.Explore
                     "Irrigation" -> Icons.Filled.CheckCircle
                     "Exhaust Fan" -> Icons.Filled.Explore
-                    "Grow Lights" -> Icons.Filled.CheckCircle
                     else -> Icons.Filled.CheckCircle
                 },
                 contentDescription = null,

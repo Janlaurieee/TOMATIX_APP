@@ -246,7 +246,7 @@ private fun ThresholdsTab(viewModel: SettingsViewModel) {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 ThresholdSection(
-                    title = "Light Intensity",
+                    title = "Sunlight Intensity",
                     icon = Icons.Filled.Bolt,
                     bgColor = Yellow50,
                     accentColor = Yellow500,
@@ -400,7 +400,7 @@ private fun AnalyticsTab(viewModel: SettingsViewModel) {
             Triple("Temperature", viewModel.temperatureAnalytics, Orange500),
             Triple("Humidity", viewModel.humidityAnalytics, Blue500),
             Triple("Soil Moisture", viewModel.soilMoistureAnalytics, Green500),
-            Triple("Light Intensity", viewModel.lightIntensityAnalytics, Yellow500)
+            Triple("Sunlight Intensity", viewModel.lightIntensityAnalytics, Yellow500)
         )
 
         Column(
@@ -491,9 +491,10 @@ private fun SensorAnalyticsCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                StatItem("Avg", String.format("%.1f", analytics.avg))
-                StatItem("Max", String.format("%.1f", analytics.max))
-                StatItem("Min", String.format("%.1f", analytics.min))
+                val hasData = analytics.chartData.isNotEmpty()
+                StatItem("Avg", if (hasData) String.format("%.1f", analytics.avg) else "--")
+                StatItem("Max", if (hasData) String.format("%.1f", analytics.max) else "--")
+                StatItem("Min", if (hasData) String.format("%.1f", analytics.min) else "--")
             }
             Spacer(modifier = Modifier.height(8.dp))
             ChartPlaceholder(
@@ -561,6 +562,12 @@ private fun ChartPlaceholder(
                     )
                 }
             }
+        } else {
+            Text(
+                text = "No data",
+                style = MaterialTheme.typography.bodySmall,
+                color = Gray400
+            )
         }
     }
 }
@@ -705,10 +712,18 @@ private fun LogsTab(viewModel: SettingsViewModel) {
                 )
                 Spacer(modifier = Modifier.height(12.dp))
 
-                viewModel.mockLogs.forEach { log ->
-                    LogEntry(log)
-                    if (log != viewModel.mockLogs.last()) {
-                        Spacer(modifier = Modifier.height(4.dp))
+                if (viewModel.mockLogs.isEmpty()) {
+                    Text(
+                        text = "No records yet.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Gray500
+                    )
+                } else {
+                    viewModel.mockLogs.forEach { log ->
+                        LogEntry(log)
+                        if (log != viewModel.mockLogs.last()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
                     }
                 }
             }

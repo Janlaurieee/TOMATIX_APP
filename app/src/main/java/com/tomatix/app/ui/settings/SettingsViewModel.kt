@@ -10,7 +10,6 @@ import com.tomatix.app.data.model.SystemLog
 import com.tomatix.app.data.model.ThresholdSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
-import java.util.Random
 import javax.inject.Inject
 
 data class SensorAnalytics(
@@ -39,20 +38,20 @@ class SettingsViewModel @Inject constructor() : ViewModel() {
     var analyticsDate by mutableStateOf(LocalDate.now())
         private set
 
-    var mockLogs by mutableStateOf(generateMockLogs())
+    var mockLogs by mutableStateOf(emptyList<SystemLog>())
         private set
 
     val temperatureAnalytics: SensorAnalytics
-        get() = generateSensorAnalytics("temperature", thresholds.tempMin, thresholds.tempMax)
+        get() = generateSensorAnalytics("temperature")
 
     val humidityAnalytics: SensorAnalytics
-        get() = generateSensorAnalytics("humidity", thresholds.humidityMin, thresholds.humidityMax)
+        get() = generateSensorAnalytics("humidity")
 
     val soilMoistureAnalytics: SensorAnalytics
-        get() = generateSensorAnalytics("soil", thresholds.soilMoistureMin, thresholds.soilMoistureMax)
+        get() = generateSensorAnalytics("soil")
 
     val lightIntensityAnalytics: SensorAnalytics
-        get() = generateSensorAnalytics("light", thresholds.lightIntensityMin * 0.8, thresholds.lightIntensityMin * 1.5)
+        get() = generateSensorAnalytics("light")
 
     fun updateThresholds(newThresholds: ThresholdSettings) {
         thresholds = newThresholds
@@ -88,56 +87,14 @@ class SettingsViewModel @Inject constructor() : ViewModel() {
         mockLogs = emptyList()
     }
 
-    private fun generateSensorAnalytics(seed: String, min: Double, max: Double): SensorAnalytics {
-        val range = max - min
-        val random = Random(seed.hashCode().toLong() + analyticsDate.toEpochDay())
-        val dataPoints = when (analyticsRange) {
-            "day" -> 24
-            "week" -> 7
-            "month" -> 30
-            "year" -> 12
-            else -> 7
-        }
-        val values = (1..dataPoints).map {
-            min + random.nextDouble() * range
-        }
+    private fun generateSensorAnalytics(seed: String): SensorAnalytics {
         return SensorAnalytics(
             name = seed,
-            avg = values.average(),
-            max = values.max(),
-            min = values.min(),
-            chartData = values.map { it.toFloat() }
+            avg = 0.0,
+            max = 0.0,
+            min = 0.0,
+            chartData = emptyList()
         )
     }
 
-    companion object {
-        private fun generateMockLogs(): List<SystemLog> {
-            val events = listOf(
-                "System started successfully",
-                "Temperature sensor reading: 24.5C",
-                "Humidity threshold exceeded",
-                "Fan speed adjusted to 75%",
-                "Irrigation system activated",
-                "Warning: Soil moisture below threshold",
-                "Camera snapshot saved",
-                "Critical: Temperature sensor failure",
-                "Notification sent to admin",
-                "System backup completed",
-                "Light intensity adjusted",
-                "pH level sensor calibrated",
-                "Error: Failed to connect to device",
-                "System update available",
-                "Water pump activated"
-            )
-            val types = listOf("info", "success", "warning", "error", "info", "info", "success")
-            return events.mapIndexed { index, event ->
-                SystemLog(
-                    id = "log_${index + 1}",
-                    time = "${9 + index / 3}:${String.format("%02d", (index * 17) % 60)}",
-                    event = event,
-                    type = types[index % types.size]
-                )
-            }
-        }
-    }
 }

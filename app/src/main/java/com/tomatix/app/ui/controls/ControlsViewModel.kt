@@ -13,7 +13,6 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class ControlsUiState(
-    val manualMode: Boolean = false,
     val pumpStatus: Boolean = true,
     val irrigationStatus: Boolean = false,
     val fanStatus: Boolean = true,
@@ -26,7 +25,6 @@ data class ControlsUiState(
     val mixingTime: Int = 30,
     val concentration: Int = 25,
     val cameraZoom: Int = 100,
-    val growLightMode: String = "Full Sun",
     val mixingTimeRemaining: Int = 0,
     val isMixing: Boolean = false,
     val isMixingPaused: Boolean = false
@@ -39,10 +37,6 @@ class ControlsViewModel @Inject constructor() : ViewModel() {
     val uiState: StateFlow<ControlsUiState> = _uiState.asStateFlow()
 
     private var mixingTimerJob: Job? = null
-
-    fun toggleManualMode() {
-        _uiState.update { it.copy(manualMode = !it.manualMode) }
-    }
 
     fun togglePump() {
         _uiState.update { it.copy(pumpStatus = !it.pumpStatus) }
@@ -90,10 +84,6 @@ class ControlsViewModel @Inject constructor() : ViewModel() {
 
     fun setCameraZoom(zoom: Int) {
         _uiState.update { it.copy(cameraZoom = zoom.coerceIn(50, 400)) }
-    }
-
-    fun setGrowLightMode(mode: String) {
-        _uiState.update { it.copy(growLightMode = mode) }
     }
 
     fun startMixing() {

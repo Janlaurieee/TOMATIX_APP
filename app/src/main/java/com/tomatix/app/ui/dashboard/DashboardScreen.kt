@@ -124,50 +124,50 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
                     SensorCard(
                         modifier = Modifier.weight(1f),
                         title = "Temperature",
-                        value = String.format("%.1f", sensorData.temperature),
+                        value = sensorData?.temperature?.let { String.format("%.1f", it) } ?: "--",
                         unit = "°C",
                         icon = Icons.Filled.DeviceThermostat,
                         iconBg = Orange100,
                         iconTint = Orange500,
                         idealRange = "Ideal: 22–26°C",
-                        trend = viewModel.getTrend(sensorData.temperature.toFloat(), 22f, 26f)
+                        trend = viewModel.getTrend(sensorData?.temperature?.toFloat(), 22f, 26f)
                     )
                     SensorCard(
                         modifier = Modifier.weight(1f),
                         title = "Humidity",
-                        value = String.format("%.1f", sensorData.humidity),
+                        value = sensorData?.humidity?.let { String.format("%.1f", it) } ?: "--",
                         unit = "%",
                         icon = Icons.Filled.WaterDrop,
                         iconBg = Blue100,
                         iconTint = Blue500,
                         idealRange = "Ideal: 50–70%",
-                        trend = viewModel.getTrend(sensorData.humidity.toFloat(), 50f, 70f),
-                        progress = (sensorData.humidity.toFloat() / 100f).coerceIn(0f, 1f)
+                        trend = viewModel.getTrend(sensorData?.humidity?.toFloat(), 50f, 70f),
+                        progress = sensorData?.humidity?.let { (it.toFloat() / 100f).coerceIn(0f, 1f) }
                     )
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     SensorCard(
                         modifier = Modifier.weight(1f),
                         title = "Soil Moisture",
-                        value = String.format("%.1f", sensorData.soilMoisture),
+                        value = sensorData?.soilMoisture?.let { String.format("%.1f", it) } ?: "--",
                         unit = "%",
                         icon = Icons.Filled.Grass,
                         iconBg = Green100,
                         iconTint = Green500,
                         idealRange = "Ideal: 45–65%",
-                        trend = viewModel.getTrend(sensorData.soilMoisture.toFloat(), 45f, 65f),
-                        progress = (sensorData.soilMoisture.toFloat() / 100f).coerceIn(0f, 1f)
+                        trend = viewModel.getTrend(sensorData?.soilMoisture?.toFloat(), 45f, 65f),
+                        progress = sensorData?.soilMoisture?.let { (it.toFloat() / 100f).coerceIn(0f, 1f) }
                     )
                     SensorCard(
                         modifier = Modifier.weight(1f),
-                        title = "Light Intensity",
-                        value = String.format("%.1f", sensorData.lightIntensity / 1000.0),
+                        title = "Sunlight Intensity",
+                        value = sensorData?.lightIntensity?.let { String.format("%.1f", it / 1000.0) } ?: "--",
                         unit = "k lux",
                         icon = Icons.Filled.WbSunny,
                         iconBg = Yellow100,
                         iconTint = Yellow500,
                         idealRange = "6–10 k lux",
-                        trend = viewModel.getTrend(sensorData.lightIntensity.toFloat(), 6000f, 10000f)
+                        trend = viewModel.getTrend(sensorData?.lightIntensity?.toFloat(), 6000f, 10000f)
                     )
                 }
             }
@@ -320,7 +320,7 @@ private fun SensorCard(
 }
 
 @Composable
-private fun SystemStatusSection(deviceStatus: DeviceStatus, alpha: Float) {
+private fun SystemStatusSection(deviceStatus: DeviceStatus?, alpha: Float) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -337,22 +337,34 @@ private fun SystemStatusSection(deviceStatus: DeviceStatus, alpha: Float) {
                 color = Gray700
             )
             Spacer(Modifier.height(12.dp))
-            StatusItem(icon = Icons.Filled.WaterDrop, label = "Water Pump", active = deviceStatus.pumpStatus)
+            StatusItem(icon = Icons.Filled.WaterDrop, label = "Water Pump", active = deviceStatus?.pumpStatus)
             Spacer(Modifier.height(8.dp))
-            StatusItem(icon = Icons.Filled.ElectricBolt, label = "Irrigation", active = deviceStatus.irrigationStatus)
+            StatusItem(icon = Icons.Filled.ElectricBolt, label = "Irrigation", active = deviceStatus?.irrigationStatus)
             Spacer(Modifier.height(8.dp))
-            StatusItem(icon = Icons.Filled.Grass, label = "Exhaust Fan", active = deviceStatus.fanStatus)
+            StatusItem(icon = Icons.Filled.Grass, label = "Exhaust Fan", active = deviceStatus?.fanStatus)
             Spacer(Modifier.height(8.dp))
-            StatusItem(icon = Icons.Filled.Camera, label = "Camera", active = deviceStatus.cameraStatus)
+            StatusItem(icon = Icons.Filled.Camera, label = "Camera", active = deviceStatus?.cameraStatus)
         }
     }
 }
 
 @Composable
-private fun StatusItem(icon: ImageVector, label: String, active: Boolean) {
-    val dotColor = if (active) Green500 else Gray300
-    val statusText = if (active) "Active" else "Inactive"
-    val statusColor = if (active) Green600 else Gray400
+private fun StatusItem(icon: ImageVector, label: String, active: Boolean?) {
+    val dotColor = when (active) {
+        true -> Green500
+        false -> Gray300
+        null -> Gray200
+    }
+    val statusText = when (active) {
+        true -> "Active"
+        false -> "Inactive"
+        null -> "--"
+    }
+    val statusColor = when (active) {
+        true -> Green600
+        false -> Gray400
+        null -> Gray400
+    }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -410,38 +422,46 @@ private fun TrendsSection(viewModel: DashboardViewModel, alpha: Float) {
             val humidData = remember { viewModel.getHumidityHistory() }
             val soilData = remember { viewModel.getSoilMoistureHistory() }
 
-            MiniLineChart(
-                data = tempData,
-                lineColor = Orange500,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp)
-            )
-            Spacer(Modifier.height(4.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                ChartLegend(color = Orange500, label = "Temp")
-                ChartLegend(color = Blue500, label = "Humidity")
-                ChartLegend(color = Green500, label = "Soil")
+            if (tempData.isEmpty() && humidData.isEmpty() && soilData.isEmpty()) {
+                Text(
+                    text = "No data available yet.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Gray500
+                )
+            } else {
+                MiniLineChart(
+                    data = tempData,
+                    lineColor = Orange500,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                )
+                Spacer(Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    ChartLegend(color = Orange500, label = "Temp")
+                    ChartLegend(color = Blue500, label = "Humidity")
+                    ChartLegend(color = Green500, label = "Soil")
+                }
+                Spacer(Modifier.height(8.dp))
+                MiniLineChart(
+                    data = humidData,
+                    lineColor = Blue500,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp)
+                )
+                Spacer(Modifier.height(8.dp))
+                MiniLineChart(
+                    data = soilData,
+                    lineColor = Green500,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp)
+                )
             }
-            Spacer(Modifier.height(8.dp))
-            MiniLineChart(
-                data = humidData,
-                lineColor = Blue500,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
-            )
-            Spacer(Modifier.height(8.dp))
-            MiniLineChart(
-                data = soilData,
-                lineColor = Green500,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
-            )
         }
     }
 }
