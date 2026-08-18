@@ -143,18 +143,6 @@ The app is pre-wired for **Firebase Realtime Database** (data layer + repository
   }
 }
 ```
-
-### To enable Firebase
-1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
-2. Add an **Android app** with package name `com.tomatix.app`
-3. Download **`google-services.json`** and place it in `app/`
-4. Enable a **Realtime Database** and note its URL
-5. Uncomment the Google Services plugin in both build files:
-   - Root `build.gradle.kts` → `id("com.google.gms.google-services") ...`
-   - `app/build.gradle.kts` → `id("com.google.gms.google-services")`
-
-> Note: the Google Services plugin is currently commented out so the project builds without `google-services.json`. Uncomment after adding your config.
-
 ---
 
 ## License
