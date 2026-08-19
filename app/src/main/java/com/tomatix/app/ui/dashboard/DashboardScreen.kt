@@ -67,6 +67,7 @@ import com.tomatix.app.data.model.SensorData
 import com.tomatix.app.ui.theme.Blue100
 import com.tomatix.app.ui.theme.Blue500
 import com.tomatix.app.ui.theme.Green100
+import com.tomatix.app.ui.theme.Green50
 import com.tomatix.app.ui.theme.Green500
 import com.tomatix.app.ui.theme.Green600
 import com.tomatix.app.ui.theme.Gray200
@@ -179,7 +180,11 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
         }
 
         item {
-            SoilMoistureSection(sensorData = sensorData, alpha = alpha)
+            SoilMoistureSection(
+                viewModel = viewModel,
+                sensorData = sensorData,
+                alpha = alpha
+            )
         }
 
         item {
@@ -343,7 +348,7 @@ private fun SensorCard(
 }
 
 @Composable
-private fun SoilMoistureSection(sensorData: SensorData?, alpha: Float) {
+private fun SoilMoistureSection(viewModel: DashboardViewModel, sensorData: SensorData?, alpha: Float) {
     val sensors = sensorData?.soilSensors ?: emptyList()
     Card(
         modifier = Modifier
@@ -376,6 +381,7 @@ private fun SoilMoistureSection(sensorData: SensorData?, alpha: Float) {
                             rowPlots.forEach { plotIndex ->
                                 PlotCard(
                                     modifier = Modifier.weight(1f),
+                                    viewModel = viewModel,
                                     plotIndex = plotIndex,
                                     sensors = sensors
                                 )
@@ -394,29 +400,51 @@ private fun SoilMoistureSection(sensorData: SensorData?, alpha: Float) {
 @Composable
 private fun PlotCard(
     modifier: Modifier = Modifier,
+    viewModel: DashboardViewModel,
     plotIndex: Int,
     sensors: List<Double>
 ) {
     Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Green100.copy(alpha = 0.35f)),
+        modifier = modifier.border(1.dp, Green100, RoundedCornerShape(16.dp)),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Green50),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                text = "Plot $plotIndex",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = Green600
-            )
-            Spacer(Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .background(Green100),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Grass,
+                        contentDescription = null,
+                        tint = Green600,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "Plot $plotIndex",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Green600
+                )
+            }
+            Spacer(Modifier.height(10.dp))
             for (i in 0 until 3) {
                 val index = (plotIndex - 1) * 3 + i
                 val value = sensors.getOrNull(index)
-                SoilSensorRow(sensorName = "sensor${index + 1}", value = value)
+                SoilSensorBox(
+                    sensorName = "sensor${index + 1}",
+                    value = value,
+                    trend = viewModel.getTrend(value?.toFloat(), 45f, 65f)
+                )
                 if (i < 2) {
-                    Spacer(Modifier.height(6.dp))
+                    Spacer(Modifier.height(8.dp))
                 }
             }
         }
@@ -424,35 +452,114 @@ private fun PlotCard(
 }
 
 @Composable
-private fun SoilSensorRow(sensorName: String, value: Double?) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+private fun SoilSensorBox(sensorName: String, value: Double?, trend: TrendDirection) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, Green100, RoundedCornerShape(12.dp)),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Text(
-            text = sensorName,
-            style = MaterialTheme.typography.bodySmall,
-            color = Gray600,
-            modifier = Modifier.weight(1f)
-        )
-        Text(
-            text = value?.let { String.format("%.1f", it) } ?: "--",
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Medium,
-            color = if (value != null) Gray700 else Gray400,
-            modifier = Modifier.width(56.dp)
-        )
-        if (value != null) {
-            Spacer(Modifier.width(8.dp))
-            LinearProgressIndicator(
-                progress = { (value.toFloat() / 100f).coerceIn(0f, 1f) },
-                modifier = Modifier
-                    .width(48.dp)
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp)),
-                color = Green500,
-                trackColor = White
+        Column(modifier = Modifier.padding(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .background(Green100),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Grass,
+                        contentDescription = sensorName,
+                        tint = Green600,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = sensorName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Gray500
+                )
+            }
+            Spacer(Modifier.height(6.dp))
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    text = value?.let { String.format("%.1f", it) } ?: "--",
+                    style = MaterialTheme.typography.headlineLarge.copy(
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = if (value != null) Gray700 else Gray400
+                )
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    text = "%",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Gray400,
+                    modifier = Modifier.padding(bottom = 3.dp)
+                )
+            }
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = "Ideal: 45–65%",
+                style = MaterialTheme.typography.bodySmall,
+                color = Gray400
             )
+
+            if (value != null) {
+                Spacer(Modifier.height(6.dp))
+                LinearProgressIndicator(
+                    progress = { (value.toFloat() / 100f).coerceIn(0f, 1f) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(5.dp)
+                        .clip(RoundedCornerShape(3.dp)),
+                    color = Green500,
+                    trackColor = Green100
+                )
+            }
+
+            Spacer(Modifier.height(6.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val (trendIcon, trendColor) = when (trend) {
+                    TrendDirection.UP -> Icons.Outlined.TrendingUp to Green500
+                    TrendDirection.DOWN -> Icons.Outlined.TrendingDown to Red500
+                    TrendDirection.STABLE -> Icons.Outlined.TrendingFlat to Gray400
+                }
+                Icon(
+                    imageVector = trendIcon,
+                    contentDescription = null,
+                    tint = trendColor,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(Modifier.width(4.dp))
+                val badgeText = when (trend) {
+                    TrendDirection.UP -> "High"
+                    TrendDirection.DOWN -> "Low"
+                    TrendDirection.STABLE -> "Normal"
+                }
+                val badgeBg = when (trend) {
+                    TrendDirection.UP -> Green100
+                    TrendDirection.DOWN -> Red500.copy(alpha = 0.12f)
+                    TrendDirection.STABLE -> Gray200
+                }
+                val badgeFg = when (trend) {
+                    TrendDirection.UP -> Green600
+                    TrendDirection.DOWN -> Red500
+                    TrendDirection.STABLE -> Gray500
+                }
+                Text(
+                    text = badgeText,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = badgeFg,
+                    modifier = Modifier
+                        .background(badgeBg, RoundedCornerShape(8.dp))
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                )
+            }
         }
     }
 }
