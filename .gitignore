@@ -7,3 +7,7 @@ build/
 captures
 .externalNativeBuild
 .cxx
+
+# Kotlin Multiplatform artifacts (not used by this Android-only project)
+shared/
+iosApp/
