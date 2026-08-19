@@ -636,7 +636,7 @@ private fun NotificationsTab(viewModel: SettingsViewModel) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 NotificationToggle(
-                    title = "Email Notifications",
+                    title = "Email Notification",
                     subtitle = "Receive alerts via email",
                     icon = Icons.Filled.Email,
                     checked = viewModel.notifications.email,
@@ -645,7 +645,7 @@ private fun NotificationsTab(viewModel: SettingsViewModel) {
                     }
                 )
                 NotificationToggle(
-                    title = "Push Notifications",
+                    title = "Push Notification",
                     subtitle = "Receive push notifications on your device",
                     icon = Icons.Filled.Smartphone,
                     checked = viewModel.notifications.push,
@@ -654,7 +654,7 @@ private fun NotificationsTab(viewModel: SettingsViewModel) {
                     }
                 )
                 NotificationToggle(
-                    title = "SMS Notifications",
+                    title = "SMS Notification",
                     subtitle = "Receive alerts via SMS",
                     icon = Icons.Filled.Sms,
                     checked = viewModel.notifications.sms,
