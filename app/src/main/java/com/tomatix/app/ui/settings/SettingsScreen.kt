@@ -145,6 +145,7 @@ private fun ThresholdsTab(viewModel: SettingsViewModel) {
     var soilMin by remember { mutableStateOf(viewModel.thresholds.soilMoistureMin.toString()) }
     var soilMax by remember { mutableStateOf(viewModel.thresholds.soilMoistureMax.toString()) }
     var lightMin by remember { mutableStateOf(viewModel.thresholds.lightIntensityMin.toString()) }
+    var lightMax by remember { mutableStateOf(viewModel.thresholds.lightIntensityMax.toString()) }
 
     Column(modifier = Modifier.padding(16.dp)) {
         Card(
@@ -258,12 +259,23 @@ private fun ThresholdsTab(viewModel: SettingsViewModel) {
                     accentColor = Yellow500,
                     contentColor = Yellow600
                 ) {
-                    NumberInput(
-                        label = "Min",
-                        value = lightMin,
-                        onValueChange = { lightMin = it },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        NumberInput(
+                            label = "Min",
+                            value = lightMin,
+                            onValueChange = { lightMin = it },
+                            modifier = Modifier.weight(1f)
+                        )
+                        NumberInput(
+                            label = "Max",
+                            value = lightMax,
+                            onValueChange = { lightMax = it },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
             }
         }
@@ -284,7 +296,8 @@ private fun ThresholdsTab(viewModel: SettingsViewModel) {
                             humidityMax = humidityMax.toDoubleOrNull() ?: viewModel.thresholds.humidityMax,
                             soilMoistureMin = soilMin.toDoubleOrNull() ?: viewModel.thresholds.soilMoistureMin,
                             soilMoistureMax = soilMax.toDoubleOrNull() ?: viewModel.thresholds.soilMoistureMax,
-                            lightIntensityMin = lightMin.toDoubleOrNull() ?: viewModel.thresholds.lightIntensityMin
+                            lightIntensityMin = lightMin.toDoubleOrNull() ?: viewModel.thresholds.lightIntensityMin,
+                            lightIntensityMax = lightMax.toDoubleOrNull() ?: viewModel.thresholds.lightIntensityMax
                         )
                     )
                     viewModel.saveThresholds()
@@ -304,6 +317,7 @@ private fun ThresholdsTab(viewModel: SettingsViewModel) {
                     soilMin = viewModel.thresholds.soilMoistureMin.toString()
                     soilMax = viewModel.thresholds.soilMoistureMax.toString()
                     lightMin = viewModel.thresholds.lightIntensityMin.toString()
+                    lightMax = viewModel.thresholds.lightIntensityMax.toString()
                 },
                 modifier = Modifier.weight(1f)
             ) {

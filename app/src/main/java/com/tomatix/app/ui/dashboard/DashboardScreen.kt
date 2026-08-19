@@ -156,8 +156,8 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
                             icon = Icons.Filled.WbSunny,
                             iconBg = Yellow100,
                             iconTint = Yellow500,
-                            idealRange = "6–10 k lux",
-                            trend = viewModel.getTrend(sensorData?.lightIntensity?.toFloat(), 6000f, 10000f)
+                            idealRange = "Ideal: 21–27",
+                            trend = viewModel.getTrend(sensorData?.lightIntensity?.toFloat(), 21f, 27f)
                         )
                     )
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
