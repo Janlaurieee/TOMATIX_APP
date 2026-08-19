@@ -1,6 +1,8 @@
 package com.tomatix.app.di
 
+import com.tomatix.app.BuildConfig
 import com.tomatix.app.data.firebase.FirebaseService
+import com.tomatix.app.data.gemini.GeminiService
 import com.tomatix.app.data.repository.SensorRepository
 import dagger.Module
 import dagger.Provides
@@ -22,5 +24,11 @@ object AppModule {
     @Singleton
     fun provideSensorRepository(firebaseService: FirebaseService): SensorRepository {
         return SensorRepository(firebaseService)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGeminiService(): GeminiService {
+        return GeminiService(BuildConfig.GEMINI_API_KEY)
     }
 }

@@ -2,16 +2,19 @@ package com.tomatix.app.ui.chatbot
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tomatix.app.data.gemini.GeminiService
 import com.tomatix.app.data.model.ChatMessage
+import com.tomatix.app.data.model.SensorData
+import com.tomatix.app.data.repository.SensorRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
+import java.util.Locale
+import java.util.UUID
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.UUID
-import javax.inject.Inject
 
 data class QuickAction(
     val label: String,
@@ -19,7 +22,10 @@ data class QuickAction(
 )
 
 @HiltViewModel
-class ChatbotViewModel @Inject constructor() : ViewModel() {
+class ChatbotViewModel @Inject constructor(
+    private val geminiService: GeminiService,
+    private val repository: SensorRepository
+) : ViewModel() {
 
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
     val messages: StateFlow<List<ChatMessage>> = _messages.asStateFlow()
@@ -32,6 +38,8 @@ class ChatbotViewModel @Inject constructor() : ViewModel() {
 
     private val _isTyping = MutableStateFlow(false)
     val isTyping: StateFlow<Boolean> = _isTyping.asStateFlow()
+
+    private val _latestSensorData = MutableStateFlow<SensorData?>(null)
 
     val quickActions = listOf(
         QuickAction("System Status", "What is the current system status?"),
@@ -50,6 +58,11 @@ class ChatbotViewModel @Inject constructor() : ViewModel() {
                 timestamp = System.currentTimeMillis()
             )
         )
+        viewModelScope.launch {
+            repository.getSensorData().collect { data ->
+                _latestSensorData.value = data
+            }
+        }
     }
 
     fun toggleOpen() {
@@ -75,16 +88,39 @@ class ChatbotViewModel @Inject constructor() : ViewModel() {
 
         viewModelScope.launch {
             _isTyping.update { true }
-            delay(1000L)
 
-            val response = generateResponse(text)
+            val prompt = buildPrompt(text)
+            val aiResponse = geminiService.generateContent(prompt)
+            val response = aiResponse?.let {
+                ChatMessage(
+                    id = UUID.randomUUID().toString(),
+                    text = it,
+                    sender = "bot",
+                    timestamp = System.currentTimeMillis()
+                )
+            } ?: generateResponse(text)
+
             _messages.update { it + response }
             _isTyping.update { false }
         }
     }
 
+    private fun buildPrompt(query: String): String {
+        val data = _latestSensorData.value
+        val sensorContext = if (data == null) {
+            "Live sensor readings are not connected yet."
+        } else {
+            "Current greenhouse readings: Temperature ${data.temperature} C, " +
+                "Humidity ${data.humidity}%, Incoming sunlight ${data.lightIntensity / 1000.0} k lux."
+        }
+        return "You are Tomatix, the AI assistant of a smart greenhouse monitoring app. " +
+            "Answer the farmer's question in a friendly, concise way, in the same language they used. " +
+            "Use the readings below when relevant. $sensorContext\n\n" +
+            "Farmer's question: $query"
+    }
+
     private fun generateResponse(query: String): ChatMessage {
-        val lower = query.lowercase()
+        val lower = query.lowercase(Locale.getDefault())
         val botId = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
 
