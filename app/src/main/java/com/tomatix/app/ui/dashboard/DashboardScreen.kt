@@ -134,8 +134,8 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
                             icon = Icons.Filled.DeviceThermostat,
                             iconBg = Orange100,
                             iconTint = Orange500,
-                            idealRange = "Ideal: 22–26°C",
-                            trend = viewModel.getTrend(sensorData?.temperature?.toFloat(), 22f, 26f)
+                            idealRange = "Ideal: 21–27°C",
+                            trend = viewModel.getTrend(sensorData?.temperature?.toFloat(), 21f, 27f)
                         ),
                         SensorItem(
                             title = "Humidity",
@@ -368,28 +368,20 @@ private fun SoilMoistureSection(sensorData: SensorData?, alpha: Float) {
             )
             Spacer(Modifier.height(12.dp))
 
-            if (sensors.isEmpty()) {
-                Text(
-                    text = "No sensor data yet.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Gray400
-                )
-            } else {
-                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                    val columns = if (maxWidth >= 600.dp) 2 else 1
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        (1..4).chunked(columns).forEach { rowPlots ->
-                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                rowPlots.forEach { plotIndex ->
-                                    PlotCard(
-                                        modifier = Modifier.weight(1f),
-                                        plotIndex = plotIndex,
-                                        sensors = sensors
-                                    )
-                                }
-                                repeat(columns - rowPlots.size) {
-                                    Spacer(modifier = Modifier.weight(1f))
-                                }
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                val columns = if (maxWidth >= 600.dp) 2 else 1
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    (1..4).chunked(columns).forEach { rowPlots ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            rowPlots.forEach { plotIndex ->
+                                PlotCard(
+                                    modifier = Modifier.weight(1f),
+                                    plotIndex = plotIndex,
+                                    sensors = sensors
+                                )
+                            }
+                            repeat(columns - rowPlots.size) {
+                                Spacer(modifier = Modifier.weight(1f))
                             }
                         }
                     }

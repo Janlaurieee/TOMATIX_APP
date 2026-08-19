@@ -1,8 +1,8 @@
 package com.tomatix.app.data.model
 
 data class ThresholdSettings(
-    val tempMin: Double = 22.0,
-    val tempMax: Double = 26.0,
+    val tempMin: Double = 21.0,
+    val tempMax: Double = 27.0,
     val humidityMin: Double = 50.0,
     val humidityMax: Double = 70.0,
     val soilMoistureMin: Double = 45.0,
