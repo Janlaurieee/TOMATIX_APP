@@ -252,7 +252,7 @@ private fun ThresholdsTab(viewModel: SettingsViewModel) {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 ThresholdSection(
-                    title = "Sunlight Intensity",
+                    title = "Incoming Sunlight",
                     icon = Icons.Filled.Bolt,
                     bgColor = Yellow50,
                     accentColor = Yellow500,
@@ -406,7 +406,7 @@ private fun AnalyticsTab(viewModel: SettingsViewModel) {
             Triple("Temperature", viewModel.temperatureAnalytics, Orange500),
             Triple("Humidity", viewModel.humidityAnalytics, Blue500),
             Triple("Soil Moisture", viewModel.soilMoistureAnalytics, Green500),
-            Triple("Sunlight Intensity", viewModel.lightIntensityAnalytics, Yellow500)
+            Triple("Incoming Sunlight", viewModel.lightIntensityAnalytics, Yellow500)
         )
 
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {

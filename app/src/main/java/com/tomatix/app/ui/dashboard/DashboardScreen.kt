@@ -149,7 +149,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
                             progress = sensorData?.humidity?.let { (it.toFloat() / 100f).coerceIn(0f, 1f) }
                         ),
                         SensorItem(
-                            title = "Sunlight Intensity",
+                            title = "Incoming Sunlight",
                             value = sensorData?.lightIntensity?.let { String.format("%.1f", it / 1000.0) } ?: "--",
                             unit = "k lux",
                             icon = Icons.Filled.WbSunny,

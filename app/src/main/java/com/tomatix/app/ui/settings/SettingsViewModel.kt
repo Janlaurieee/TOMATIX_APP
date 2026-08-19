@@ -109,7 +109,7 @@ class SettingsViewModel @Inject constructor(
 
     fun buildSensorCsv(): String {
         val sb = StringBuilder()
-        sb.append("Timestamp,Temperature (C),Humidity (%),Sunlight (k lux),")
+        sb.append("Timestamp,Temperature (C),Humidity (%),Incoming Sunlight (k lux),")
         for (i in 1..12) {
             sb.append("sensor$i (%)")
             if (i < 12) sb.append(',')

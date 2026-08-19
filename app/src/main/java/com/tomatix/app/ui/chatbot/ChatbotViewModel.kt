@@ -104,7 +104,7 @@ class ChatbotViewModel @Inject constructor() : ViewModel() {
         return ChatMessage(
             id = id,
             text = "Live sensor data isn't connected yet.\n\n" +
-                    "Once your greenhouse sensors are linked, I'll be able to show temperature, humidity, soil moisture, and sunlight intensity readings here.\n\n" +
+                    "Once your greenhouse sensors are linked, I'll be able to show temperature, humidity, soil moisture, and incoming sunlight readings here.\n\n" +
                     "You can still ask me for general growing advice in the meantime.",
             sender = "bot",
             timestamp = timestamp,
@@ -124,7 +124,7 @@ class ChatbotViewModel @Inject constructor() : ViewModel() {
                     "In the meantime, these crops are commonly suited to greenhouse growing:\n\n" +
                     "Tomatoes - warm-season crop, great for greenhouses\n" +
                     "Lettuce - grows well in cooler greenhouse conditions\n" +
-                    "Basil - thrives with consistent warmth and light\n" +
+                    "Basil - thrives with consistent warmth and sunlight\n" +
                     "Peppers - do well in warm, humid environments",
             sender = "bot",
             timestamp = timestamp,
@@ -195,13 +195,13 @@ class ChatbotViewModel @Inject constructor() : ViewModel() {
             id = id,
             text = "System Status:\n\n" +
                     "Live device and sensor data isn't connected yet.\n\n" +
-                    "Once connected, I'll show the status of your temperature, humidity, soil moisture, and light sensors, along with the irrigation and ventilation systems.",
+                    "Once connected, I'll show the status of your temperature, humidity, soil moisture, and incoming sunlight sensors, along with the irrigation and ventilation systems.",
             sender = "bot",
             timestamp = timestamp,
             isAnalysis = true,
             recommendations = listOf(
                 "Calibrate soil moisture sensor after setup",
-                "Clean light sensor lens periodically",
+                "Clean the sunlight sensor lens periodically",
                 "Check irrigation lines for blockages",
                 "Update firmware when available"
             )

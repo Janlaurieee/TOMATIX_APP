@@ -11,7 +11,7 @@ Runs on **Android Studio** using **Material 3** design with the signature green 
 ## Features
 
 ### 📊 Dashboard
-- **Live sensor cards** — Temperature, Humidity, Sunlight Intensity (measures sun intensity inside the greenhouse)
+- **Live sensor cards** — Temperature, Humidity, Incoming Sunlight (measured sunlight entering the greenhouse)
   - Color-coded icons (orange/blue/yellow)
   - Ideal range indicators + trend arrows (up / down / stable)
   - Status badges & progress bars for optimal-range detection
@@ -30,7 +30,7 @@ Runs on **Android Studio** using **Material 3** design with the signature green 
 
 ### ⚙️ Settings
 - **Thresholds** — set min/max acceptable ranges for each sensor
-- **Analytics** — Day/Week/Month/Year range charts with avg/max/min stats + **Save Data** button to export all sensor readings to a CSV file (timestamp, temperature, humidity, sunlight, sensor1–sensor12)
+- **Analytics** — Day/Week/Month/Year range charts with avg/max/min stats + **Save Data** button to export all sensor readings to a CSV file (timestamp, temperature, humidity, incoming sunlight, sensor1–sensor12)
 - **Notifications** — email, push, SMS, and critical-only preferences
 - **System Logs** — activity log viewer (starts empty)
 - Tab bar uses icon-on-top / label-below layout
