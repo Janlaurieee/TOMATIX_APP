@@ -1,8 +1,12 @@
 package com.tomatix.app.ui.settings
 
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.GraphicEq
@@ -61,6 +66,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -107,13 +113,13 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                     selected = viewModel.selectedTab == index,
                     onClick = { viewModel.onTabSelected(index) },
                     text = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(
                                 imageVector = icon,
                                 contentDescription = null,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(18.dp)
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(title)
                         }
                     }
@@ -403,27 +409,62 @@ private fun AnalyticsTab(viewModel: SettingsViewModel) {
             Triple("Sunlight Intensity", viewModel.lightIntensityAnalytics, Yellow500)
         )
 
-        Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            for (row in analytics.chunked(2)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    row.forEach { (name, data, color) ->
-                        SensorAnalyticsCard(
-                            name = name,
-                            analytics = data,
-                            color = color,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    if (row.size < 2) {
-                        Spacer(modifier = Modifier.weight(1f))
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val columns = if (maxWidth < 400.dp) 1 else 2
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                for (row in analytics.chunked(columns)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        row.forEach { (name, data, color) ->
+                            SensorAnalyticsCard(
+                                name = name,
+                                analytics = data,
+                                color = color,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        repeat(columns - row.size) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
                     }
                 }
             }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        val context = LocalContext.current
+        val csvLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.CreateDocument("text/csv")
+        ) { uri ->
+            if (uri != null) {
+                context.contentResolver.openOutputStream(uri)?.use { out ->
+                    out.write(viewModel.buildSensorCsv().toByteArray(Charsets.UTF_8))
+                }
+                Toast.makeText(context, "Sensor data exported.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        Button(
+            onClick = {
+                csvLauncher.launch(
+                    "tomatix_sensors_${System.currentTimeMillis()}.csv"
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Green600)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Download,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Save Data", color = White)
         }
     }
 

@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -34,6 +35,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -70,6 +73,7 @@ import com.tomatix.app.ui.theme.Gray200
 import com.tomatix.app.ui.theme.Gray300
 import com.tomatix.app.ui.theme.Gray400
 import com.tomatix.app.ui.theme.Gray500
+import com.tomatix.app.ui.theme.Gray600
 import com.tomatix.app.ui.theme.Gray700
 import com.tomatix.app.ui.theme.Orange100
 import com.tomatix.app.ui.theme.Orange500
@@ -120,57 +124,72 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
                 modifier = Modifier.fadeAlpha(alpha),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SensorCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Temperature",
-                        value = sensorData?.temperature?.let { String.format("%.1f", it) } ?: "--",
-                        unit = "°C",
-                        icon = Icons.Filled.DeviceThermostat,
-                        iconBg = Orange100,
-                        iconTint = Orange500,
-                        idealRange = "Ideal: 22–26°C",
-                        trend = viewModel.getTrend(sensorData?.temperature?.toFloat(), 22f, 26f)
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                    val columns = if (maxWidth >= 700.dp) 3 else 2
+                    val items = listOf(
+                        SensorItem(
+                            title = "Temperature",
+                            value = sensorData?.temperature?.let { String.format("%.1f", it) } ?: "--",
+                            unit = "°C",
+                            icon = Icons.Filled.DeviceThermostat,
+                            iconBg = Orange100,
+                            iconTint = Orange500,
+                            idealRange = "Ideal: 22–26°C",
+                            trend = viewModel.getTrend(sensorData?.temperature?.toFloat(), 22f, 26f)
+                        ),
+                        SensorItem(
+                            title = "Humidity",
+                            value = sensorData?.humidity?.let { String.format("%.1f", it) } ?: "--",
+                            unit = "%",
+                            icon = Icons.Filled.WaterDrop,
+                            iconBg = Blue100,
+                            iconTint = Blue500,
+                            idealRange = "Ideal: 50–70%",
+                            trend = viewModel.getTrend(sensorData?.humidity?.toFloat(), 50f, 70f),
+                            progress = sensorData?.humidity?.let { (it.toFloat() / 100f).coerceIn(0f, 1f) }
+                        ),
+                        SensorItem(
+                            title = "Sunlight Intensity",
+                            value = sensorData?.lightIntensity?.let { String.format("%.1f", it / 1000.0) } ?: "--",
+                            unit = "k lux",
+                            icon = Icons.Filled.WbSunny,
+                            iconBg = Yellow100,
+                            iconTint = Yellow500,
+                            idealRange = "6–10 k lux",
+                            trend = viewModel.getTrend(sensorData?.lightIntensity?.toFloat(), 6000f, 10000f)
+                        )
                     )
-                    SensorCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Humidity",
-                        value = sensorData?.humidity?.let { String.format("%.1f", it) } ?: "--",
-                        unit = "%",
-                        icon = Icons.Filled.WaterDrop,
-                        iconBg = Blue100,
-                        iconTint = Blue500,
-                        idealRange = "Ideal: 50–70%",
-                        trend = viewModel.getTrend(sensorData?.humidity?.toFloat(), 50f, 70f),
-                        progress = sensorData?.humidity?.let { (it.toFloat() / 100f).coerceIn(0f, 1f) }
-                    )
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SensorCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Soil Moisture",
-                        value = sensorData?.soilMoisture?.let { String.format("%.1f", it) } ?: "--",
-                        unit = "%",
-                        icon = Icons.Filled.Grass,
-                        iconBg = Green100,
-                        iconTint = Green500,
-                        idealRange = "Ideal: 45–65%",
-                        trend = viewModel.getTrend(sensorData?.soilMoisture?.toFloat(), 45f, 65f),
-                        progress = sensorData?.soilMoisture?.let { (it.toFloat() / 100f).coerceIn(0f, 1f) }
-                    )
-                    SensorCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Sunlight Intensity",
-                        value = sensorData?.lightIntensity?.let { String.format("%.1f", it / 1000.0) } ?: "--",
-                        unit = "k lux",
-                        icon = Icons.Filled.WbSunny,
-                        iconBg = Yellow100,
-                        iconTint = Yellow500,
-                        idealRange = "6–10 k lux",
-                        trend = viewModel.getTrend(sensorData?.lightIntensity?.toFloat(), 6000f, 10000f)
-                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        items.chunked(columns).forEach { rowItems ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                rowItems.forEach { item ->
+                                    SensorCard(
+                                        modifier = Modifier.weight(1f),
+                                        item = item
+                                    )
+                                }
+                                repeat(columns - rowItems.size) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    }
                 }
             }
+        }
+
+        item {
+            SoilMoistureSection(sensorData = sensorData, alpha = alpha)
+        }
+
+        item {
+            QuickControlsSection(
+                deviceStatus = deviceStatus,
+                alpha = alpha,
+                onPumpToggle = viewModel::togglePump,
+                onFanToggle = viewModel::toggleFan,
+                onCameraToggle = viewModel::toggleCamera
+            )
         }
 
         item {
@@ -198,18 +217,22 @@ private fun Modifier.fadeAlpha(alpha: Float): Modifier = this.then(
     }
 )
 
+private data class SensorItem(
+    val title: String,
+    val value: String,
+    val unit: String,
+    val icon: ImageVector,
+    val iconBg: Color,
+    val iconTint: Color,
+    val idealRange: String,
+    val trend: TrendDirection,
+    val progress: Float? = null
+)
+
 @Composable
 private fun SensorCard(
     modifier: Modifier = Modifier,
-    title: String,
-    value: String,
-    unit: String,
-    icon: ImageVector,
-    iconBg: Color,
-    iconTint: Color,
-    idealRange: String,
-    trend: TrendDirection,
-    progress: Float? = null
+    item: SensorItem
 ) {
     Card(
         modifier = modifier
@@ -223,26 +246,26 @@ private fun SensorCard(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(iconBg),
+                    .background(item.iconBg),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = icon,
-                    contentDescription = title,
-                    tint = iconTint,
+                    imageVector = item.icon,
+                    contentDescription = item.title,
+                    tint = item.iconTint,
                     modifier = Modifier.size(22.dp)
                 )
             }
             Spacer(Modifier.height(10.dp))
             Text(
-                text = title,
+                text = item.title,
                 style = MaterialTheme.typography.bodyMedium,
                 color = Gray500
             )
             Spacer(Modifier.height(2.dp))
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
-                    text = value,
+                    text = item.value,
                     style = MaterialTheme.typography.headlineLarge.copy(
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold
@@ -251,7 +274,7 @@ private fun SensorCard(
                 )
                 Spacer(Modifier.width(4.dp))
                 Text(
-                    text = unit,
+                    text = item.unit,
                     style = MaterialTheme.typography.bodyMedium,
                     color = Gray400,
                     modifier = Modifier.padding(bottom = 4.dp)
@@ -259,27 +282,27 @@ private fun SensorCard(
             }
             Spacer(Modifier.height(2.dp))
             Text(
-                text = idealRange,
+                text = item.idealRange,
                 style = MaterialTheme.typography.bodySmall,
                 color = Gray400
             )
 
-            if (progress != null) {
+            if (item.progress != null) {
                 Spacer(Modifier.height(8.dp))
                 LinearProgressIndicator(
-                    progress = { progress },
+                    progress = { item.progress },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(6.dp)
                         .clip(RoundedCornerShape(3.dp)),
-                    color = iconTint,
-                    trackColor = iconBg,
+                    color = item.iconTint,
+                    trackColor = item.iconBg,
                 )
             }
 
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val (trendIcon, trendColor) = when (trend) {
+                val (trendIcon, trendColor) = when (item.trend) {
                     TrendDirection.UP -> Icons.Outlined.TrendingUp to Green500
                     TrendDirection.DOWN -> Icons.Outlined.TrendingDown to Red500
                     TrendDirection.STABLE -> Icons.Outlined.TrendingFlat to Gray400
@@ -291,17 +314,17 @@ private fun SensorCard(
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(Modifier.width(4.dp))
-                val badgeText = when (trend) {
+                val badgeText = when (item.trend) {
                     TrendDirection.UP -> "High"
                     TrendDirection.DOWN -> "Low"
                     TrendDirection.STABLE -> "Normal"
                 }
-                val badgeBg = when (trend) {
+                val badgeBg = when (item.trend) {
                     TrendDirection.UP -> Green100
                     TrendDirection.DOWN -> Red500.copy(alpha = 0.12f)
                     TrendDirection.STABLE -> Gray200
                 }
-                val badgeFg = when (trend) {
+                val badgeFg = when (item.trend) {
                     TrendDirection.UP -> Green600
                     TrendDirection.DOWN -> Red500
                     TrendDirection.STABLE -> Gray500
@@ -316,6 +339,230 @@ private fun SensorCard(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun SoilMoistureSection(sensorData: SensorData?, alpha: Float) {
+    val sensors = sensorData?.soilSensors ?: emptyList()
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .fadeAlpha(alpha)
+            .border(1.dp, Green100, RoundedCornerShape(16.dp)),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Soil Moisture Sensors",
+                style = MaterialTheme.typography.titleLarge,
+                color = Gray700
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "12 sensors grouped in 4 plots",
+                style = MaterialTheme.typography.bodySmall,
+                color = Gray500
+            )
+            Spacer(Modifier.height(12.dp))
+
+            if (sensors.isEmpty()) {
+                Text(
+                    text = "No sensor data yet.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Gray400
+                )
+            } else {
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                    val columns = if (maxWidth >= 600.dp) 2 else 1
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        (1..4).chunked(columns).forEach { rowPlots ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                rowPlots.forEach { plotIndex ->
+                                    PlotCard(
+                                        modifier = Modifier.weight(1f),
+                                        plotIndex = plotIndex,
+                                        sensors = sensors
+                                    )
+                                }
+                                repeat(columns - rowPlots.size) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlotCard(
+    modifier: Modifier = Modifier,
+    plotIndex: Int,
+    sensors: List<Double>
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Green100.copy(alpha = 0.35f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = "Plot $plotIndex",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = Green600
+            )
+            Spacer(Modifier.height(8.dp))
+            for (i in 0 until 3) {
+                val index = (plotIndex - 1) * 3 + i
+                val value = sensors.getOrNull(index)
+                SoilSensorRow(sensorName = "sensor${index + 1}", value = value)
+                if (i < 2) {
+                    Spacer(Modifier.height(6.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SoilSensorRow(sensorName: String, value: Double?) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = sensorName,
+            style = MaterialTheme.typography.bodySmall,
+            color = Gray600,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = value?.let { String.format("%.1f", it) } ?: "--",
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Medium,
+            color = if (value != null) Gray700 else Gray400,
+            modifier = Modifier.width(56.dp)
+        )
+        if (value != null) {
+            Spacer(Modifier.width(8.dp))
+            LinearProgressIndicator(
+                progress = { (value.toFloat() / 100f).coerceIn(0f, 1f) },
+                modifier = Modifier
+                    .width(48.dp)
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(2.dp)),
+                color = Green500,
+                trackColor = White
+            )
+        }
+    }
+}
+
+@Composable
+private fun QuickControlsSection(
+    deviceStatus: DeviceStatus?,
+    alpha: Float,
+    onPumpToggle: () -> Unit,
+    onFanToggle: () -> Unit,
+    onCameraToggle: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .fadeAlpha(alpha)
+            .border(1.dp, Green100, RoundedCornerShape(16.dp)),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Quick Controls",
+                style = MaterialTheme.typography.titleLarge,
+                color = Gray700
+            )
+            Spacer(Modifier.height(12.dp))
+            QuickControlRow(
+                icon = Icons.Filled.WaterDrop,
+                label = "Water Pump",
+                checked = deviceStatus?.pumpStatus == true,
+                backgroundColor = Blue100,
+                accentColor = Blue500,
+                onToggle = onPumpToggle
+            )
+            Spacer(Modifier.height(8.dp))
+            QuickControlRow(
+                icon = Icons.Filled.Grass,
+                label = "Exhaust Fan",
+                checked = deviceStatus?.fanStatus == true,
+                backgroundColor = Green100,
+                accentColor = Green500,
+                onToggle = onFanToggle
+            )
+            Spacer(Modifier.height(8.dp))
+            QuickControlRow(
+                icon = Icons.Filled.Camera,
+                label = "Camera Module",
+                checked = deviceStatus?.cameraStatus == true,
+                backgroundColor = Yellow100,
+                accentColor = Yellow500,
+                onToggle = onCameraToggle
+            )
+        }
+    }
+}
+
+@Composable
+private fun QuickControlRow(
+    icon: ImageVector,
+    label: String,
+    checked: Boolean,
+    backgroundColor: Color,
+    accentColor: Color,
+    onToggle: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(backgroundColor),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = accentColor,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = Gray700,
+            modifier = Modifier.weight(1f)
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = { onToggle() },
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = White,
+                checkedTrackColor = accentColor,
+                uncheckedThumbColor = White,
+                uncheckedTrackColor = Gray300
+            )
+        )
     }
 }
 

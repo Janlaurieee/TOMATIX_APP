@@ -6,6 +6,8 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -100,7 +103,7 @@ fun ChatbotOverlay(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxSize(0.85f)
+                    .fillMaxHeight(0.8f)
                     .padding(horizontal = 0.dp)
                     .navigationBarsPadding(),
                 shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
@@ -158,41 +161,47 @@ fun ChatbotOverlay(
             }
         }
 
-        FloatingActionButton(
-            onClick = { viewModel.toggleOpen() },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 16.dp, bottom = 96.dp)
-                .size(56.dp),
-            containerColor = Color.Transparent,
-            elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
+        AnimatedVisibility(
+            visible = !isOpen,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier.align(Alignment.BottomEnd)
         ) {
-            Box(
+            FloatingActionButton(
+                onClick = { viewModel.toggleOpen() },
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(Green400, Green600, Green700)
-                        ),
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
+                    .padding(end = 16.dp, bottom = 16.dp)
+                    .size(56.dp),
+                containerColor = Color.Transparent,
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Send,
-                    contentDescription = "Chat",
-                    tint = White,
-                    modifier = Modifier.size(24.dp)
-                )
-
                 Box(
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(2.dp)
-                        .size(12.dp)
-                        .clip(CircleShape)
-                        .background(Red500)
-                )
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(Green400, Green600, Green700)
+                            ),
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Send,
+                        contentDescription = "Chat",
+                        tint = White,
+                        modifier = Modifier.size(24.dp)
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(2.dp)
+                            .size(12.dp)
+                            .clip(CircleShape)
+                            .background(Red500)
+                    )
+                }
             }
         }
     }

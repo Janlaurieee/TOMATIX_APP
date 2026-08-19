@@ -11,27 +11,33 @@ Runs on **Android Studio** using **Material 3** design with the signature green 
 ## Features
 
 ### 📊 Dashboard
-- **Live sensor cards** — Temperature, Humidity, Soil Moisture, Sunlight Intensity (measures sun intensity inside the greenhouse)
-  - Color-coded icons (orange/blue/green/yellow)
+- **Live sensor cards** — Temperature, Humidity, Sunlight Intensity (measures sun intensity inside the greenhouse)
+  - Color-coded icons (orange/blue/yellow)
   - Ideal range indicators + trend arrows (up / down / stable)
   - Status badges & progress bars for optimal-range detection
-- **System Status** — Water Pump, Irrigation, Exhaust Fan, Camera with live pulsing indicators
+  - Responsive grid: auto-stacks 1–3 columns based on screen width
+- **Soil Moisture Sensors** — 12 sensors grouped into 4 plots (sensor1–3 = Plot 1, sensor4–6 = Plot 2, sensor7–9 = Plot 3, sensor10–12 = Plot 4) with per-sensor readings and progress bars
+- **Quick Controls** — Water Pump, Exhaust Fan, and Camera Module on/off toggles that push state to Firebase
+- **System Status** — Water Pump, Irrigation, Exhaust Fan, Camera with live status indicators
 - **24-Hour Trends** — historical sensor chart with legend
 
 ### 🎛️ Controls
 - **Chemical Distribution System** — chemical type selector (Fertilizer, Pesticide, Herbicide, Fungicide), mixing time, concentration slider, live countdown timer, and distribution controls with safety guidelines
+  - Action buttons arranged 2 per row (Start Mix + Pause, then Resume + Reset)
 - **Camera Module** — live feed placeholder, zoom slider, snapshot/refresh, pan controls
 - **Water Pump / Irrigation / Exhaust Fan** — on/off switches + speed sliders & quick cycle actions
 - **Emergency Controls** — Emergency Stop All + Reset to Default
 
 ### ⚙️ Settings
 - **Thresholds** — set min/max acceptable ranges for each sensor
-- **Analytics** — Day/Week/Month/Year range charts with avg/max/min stats
+- **Analytics** — Day/Week/Month/Year range charts with avg/max/min stats + **Save Data** button to export all sensor readings to a CSV file (timestamp, temperature, humidity, sunlight, sensor1–sensor12)
 - **Notifications** — email, push, SMS, and critical-only preferences
 - **System Logs** — activity log viewer (starts empty)
+- Tab bar uses icon-on-top / label-below layout
 
 ### 🤖 AI Chatbot
-- Floating assistant with quick actions
+- Floating assistant (logo hidden automatically while the chat is open)
+- Chat panel sits above the bottom navigation and controls so the input box never covers them
 - Smart responses analyzing sensor conditions: crop recommendations, soil moisture advice, temperature tuning, growth optimization
 - Recommendation cards + simulated typing indicator
 
@@ -117,7 +123,8 @@ The app is pre-wired for **Firebase Realtime Database** (data layer + repository
     "temperature": 24.5,
     "humidity": 65,
     "soilMoisture": 58,
-    "lightIntensity": 7500
+    "lightIntensity": 7500,
+    "soilSensors": [58.2, 61.0, 57.4, 60.1, 63.3, 55.9, 59.0, 62.2, 58.6, 61.5, 57.8, 60.4]
   },
   "devices": {
     "pumpStatus": true,
@@ -143,6 +150,9 @@ The app is pre-wired for **Firebase Realtime Database** (data layer + repository
   }
 }
 ```
+
+> `soilSensors` is an ordered array of 12 readings (sensor1..sensor12 = positions 0..11).
+
 ---
 
 ## License

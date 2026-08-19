@@ -38,6 +38,26 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
+    fun togglePump() {
+        updateDeviceStatus { it.copy(pumpStatus = !it.pumpStatus) }
+    }
+
+    fun toggleFan() {
+        updateDeviceStatus { it.copy(fanStatus = !it.fanStatus) }
+    }
+
+    fun toggleCamera() {
+        updateDeviceStatus { it.copy(cameraStatus = !it.cameraStatus) }
+    }
+
+    private fun updateDeviceStatus(transform: (DeviceStatus) -> DeviceStatus) {
+        val updated = transform(_deviceStatus.value ?: DeviceStatus())
+        _deviceStatus.value = updated
+        viewModelScope.launch {
+            repository.updateDeviceStatus(updated)
+        }
+    }
+
     fun getTemperatureHistory(): List<DataPoint> = emptyList()
 
     fun getHumidityHistory(): List<DataPoint> = emptyList()

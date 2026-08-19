@@ -261,45 +261,52 @@ private fun ChemicalDistributionCard(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Action buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Button(
-                    onClick = viewModel::startMixing,
-                    enabled = !uiState.isMixing,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Orange500),
-                    shape = RoundedCornerShape(10.dp)
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Start Mix", fontSize = 13.sp)
+                    Button(
+                        onClick = viewModel::startMixing,
+                        enabled = !uiState.isMixing,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Orange500),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Start Mix", fontSize = 13.sp)
+                    }
+                    Button(
+                        onClick = viewModel::pauseMixing,
+                        enabled = uiState.isMixing && !uiState.isMixingPaused,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Yellow500),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Pause", color = Gray800, fontSize = 13.sp)
+                    }
                 }
-                Button(
-                    onClick = viewModel::pauseMixing,
-                    enabled = uiState.isMixing && !uiState.isMixingPaused,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Yellow500),
-                    shape = RoundedCornerShape(10.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Pause", color = Gray800, fontSize = 13.sp)
-                }
-                Button(
-                    onClick = viewModel::resumeMixing,
-                    enabled = uiState.isMixingPaused,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Green500),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text("Resume", fontSize = 13.sp)
-                }
-                Button(
-                    onClick = viewModel::stopMixing,
-                    enabled = uiState.isMixing || uiState.isMixingPaused,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Red500),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text("Reset", fontSize = 13.sp)
+                    Button(
+                        onClick = viewModel::resumeMixing,
+                        enabled = uiState.isMixingPaused,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Green500),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Resume", fontSize = 13.sp)
+                    }
+                    Button(
+                        onClick = viewModel::stopMixing,
+                        enabled = uiState.isMixing || uiState.isMixingPaused,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Red500),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Reset", fontSize = 13.sp)
+                    }
                 }
             }
 

@@ -35,8 +35,8 @@ fun AppNavHost(navController: NavHostController) {
                     SettingsScreen()
                 }
             }
-        }
 
-        ChatbotOverlay()
+            ChatbotOverlay()
+        }
     }
 }
