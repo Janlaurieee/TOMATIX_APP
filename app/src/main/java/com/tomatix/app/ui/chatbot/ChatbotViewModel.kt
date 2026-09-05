@@ -2,7 +2,10 @@ package com.tomatix.app.ui.chatbot
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tomatix.app.data.gemini.AiResult
+import com.tomatix.app.data.gemini.GeminiChatMessage
 import com.tomatix.app.data.gemini.GeminiService
+import com.tomatix.app.data.local.AppPreferences
 import com.tomatix.app.data.model.ChatMessage
 import com.tomatix.app.data.model.SensorData
 import com.tomatix.app.data.repository.SensorRepository
@@ -24,7 +27,8 @@ data class QuickAction(
 @HiltViewModel
 class ChatbotViewModel @Inject constructor(
     private val geminiService: GeminiService,
-    private val repository: SensorRepository
+    private val repository: SensorRepository,
+    private val appPreferences: AppPreferences
 ) : ViewModel() {
 
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
@@ -46,18 +50,20 @@ class ChatbotViewModel @Inject constructor(
         QuickAction("Crop Advice", "What crops should I plant?"),
         QuickAction("Soil Check", "How is the soil moisture?"),
         QuickAction("Temperature", "What is the temperature?"),
-        QuickAction("Growth Tips", "Give me growth tips"),
+        QuickAction("Growth Tips", "Give me growth tips")
     )
 
     init {
-        _messages.value = listOf(
+        val savedMessages = appPreferences.loadChatMessages()
+        _messages.value = savedMessages.ifEmpty { listOf(
             ChatMessage(
                 id = UUID.randomUUID().toString(),
-                text = "Hello! I'm your Tomatix AI assistant. I can help you monitor your greenhouse, analyze sensor data, and provide growing recommendations. How can I help you today?",
+                text = "Hello! I'm Tomi, your greenhouse assistant. Ask me about your plants or live sensor readings in English, Filipino, Bisaya, Hiligaynon, or Kinaray-a (Karay-a). You can also ask me to switch languages. How can I help you today?",
                 sender = "bot",
                 timestamp = System.currentTimeMillis()
             )
-        )
+        ) }
+
         viewModelScope.launch {
             repository.getSensorData().collect { data ->
                 _latestSensorData.value = data
@@ -75,7 +81,7 @@ class ChatbotViewModel @Inject constructor(
 
     fun sendMessage() {
         val text = _inputValue.value.trim()
-        if (text.isEmpty()) return
+        if (text.isEmpty() || _isTyping.value) return
 
         val userMessage = ChatMessage(
             id = UUID.randomUUID().toString(),
@@ -83,189 +89,166 @@ class ChatbotViewModel @Inject constructor(
             sender = "user",
             timestamp = System.currentTimeMillis()
         )
-        _messages.update { it + userMessage }
-        _inputValue.update { "" }
+        val currentMessages = _messages.value + userMessage
+        _messages.value = currentMessages
+        appPreferences.saveChatMessages(currentMessages)
+        _inputValue.value = ""
+        _isTyping.value = true
 
         viewModelScope.launch {
-            _isTyping.update { true }
-
-            val prompt = buildPrompt(text)
-            val aiResponse = geminiService.generateContent(prompt)
-            val response = aiResponse?.let {
-                ChatMessage(
+            val response = when (
+                val aiResult = geminiService.generateContent(
+                    messages = buildConversation(currentMessages),
+                    liveSensorContext = buildLiveSensorContext(_latestSensorData.value)
+                )
+            ) {
+                is AiResult.Success -> ChatMessage(
                     id = UUID.randomUUID().toString(),
-                    text = it,
+                    text = aiResult.text,
                     sender = "bot",
                     timestamp = System.currentTimeMillis()
                 )
-            } ?: generateResponse(text)
+
+                AiResult.ConfigurationError -> generateLocalResponse(text)
+
+                is AiResult.ApiError -> ChatMessage(
+                    id = UUID.randomUUID().toString(),
+                    text = aiResult.message,
+                    sender = "bot",
+                    timestamp = System.currentTimeMillis()
+                )
+            }
 
             _messages.update { it + response }
-            _isTyping.update { false }
+            appPreferences.saveChatMessages(_messages.value)
+            _isTyping.value = false
         }
     }
 
-    private fun buildPrompt(query: String): String {
-        val data = _latestSensorData.value
-        val sensorContext = if (data == null) {
-            "Live sensor readings are not connected yet."
+    /**
+     * Gemini expects alternating `user` and `model` roles. The greeting is local UI copy, so it
+     * is deliberately excluded from the request. We also keep the request bounded for speed.
+     */
+    private fun buildConversation(history: List<ChatMessage>): List<GeminiChatMessage> {
+        val recentMessages = history
+            .dropWhile { it.sender != "user" }
+            .takeLast(MAX_CONVERSATION_MESSAGES)
+            .dropWhile { it.sender != "user" }
+
+        return recentMessages.mapNotNull { message ->
+            message.text.trim().takeIf { it.isNotEmpty() }?.let { text ->
+                GeminiChatMessage(
+                    role = if (message.sender == "user") "user" else "model",
+                    text = text
+                )
+            }
+        }
+    }
+
+    private fun buildLiveSensorContext(data: SensorData?): String {
+        if (data == null) {
+            return "No sensor reading has been received from Firebase yet. Do not invent live readings."
+        }
+
+        val soilSensors = data.soilSensors.take(SOIL_SENSOR_COUNT)
+        val individualSoilReadings = if (soilSensors.isEmpty()) {
+            "Individual soil probes have not reported yet."
         } else {
-            "Current greenhouse readings: Temperature ${data.temperature} C, " +
-                "Humidity ${data.humidity}%, Incoming sunlight ${data.lightIntensity / 1000.0} k lux."
+            soilSensors.mapIndexed { index, reading ->
+                "Sensor ${index + 1}: ${formatReading(reading)}%"
+            }.joinToString(", ")
         }
-        return "You are Tomatix, the AI assistant of a smart greenhouse monitoring app. " +
-            "Answer the farmer's question in a friendly, concise way, in the same language they used. " +
-            "Use the readings below when relevant. $sensorContext\n\n" +
-            "Farmer's question: $query"
+
+        return """
+            Latest synced Firebase readings:
+            - Temperature: ${formatReading(data.temperature)} °C
+            - Humidity: ${formatReading(data.humidity)}%
+            - Incoming sunlight: ${formatReading(data.lightIntensity / 1000.0)} k lux
+            - Overall soil moisture: ${formatReading(data.soilMoisture)}%
+            - Soil moisture probes (up to four): $individualSoilReadings
+        """.trimIndent()
     }
 
-    private fun generateResponse(query: String): ChatMessage {
+    /** Provides useful answers when no local Gemini key has been configured. */
+    private fun generateLocalResponse(query: String): ChatMessage {
         val lower = query.lowercase(Locale.getDefault())
-        val botId = UUID.randomUUID().toString()
-        val now = System.currentTimeMillis()
+        val data = _latestSensorData.value
+        val responseText = when {
+            lower.contains("condition") || lower.contains("status") || lower.contains("system") -> {
+                if (data == null) {
+                    "I have not received a live sensor reading yet. Once Firebase sends one, I can summarize the greenhouse conditions here."
+                } else {
+                    "Latest greenhouse readings: ${formatReading(data.temperature)}°C, " +
+                        "${formatReading(data.humidity)}% humidity, " +
+                        "${formatReading(data.soilMoisture)}% overall soil moisture, and " +
+                        "${formatReading(data.lightIntensity / 1000.0)} k lux incoming sunlight."
+                }
+            }
 
-        return when {
-            lower.contains("condition") || lower.contains("status") -> buildStatusResponse(botId, now)
-            lower.contains("crop") || lower.contains("plant") -> buildCropResponse(botId, now)
-            lower.contains("soil") || lower.contains("moisture") -> buildSoilResponse(botId, now)
-            lower.contains("temperature") || lower.contains("temp") -> buildTemperatureResponse(botId, now)
-            lower.contains("growth") || lower.contains("grow") || lower.contains("tip") -> buildGrowthResponse(botId, now)
-            lower.contains("system") || lower.contains("device") -> buildSystemResponse(botId, now)
-            lower.contains("help") || lower.contains("what can you do") -> buildHelpResponse(botId, now)
-            else -> buildDefaultResponse(botId, now)
+            lower.contains("soil") || lower.contains("moisture") -> localSoilResponse(data)
+            lower.contains("temperature") || lower.contains("temp") -> localTemperatureResponse(data)
+            lower.contains("growth") || lower.contains("grow") || lower.contains("tip") -> {
+                "For steady tomato growth, keep watering consistent, train plants to a support, prune damaged lower leaves, and maintain good airflow. " +
+                    data?.let { "Your latest temperature is ${formatReading(it.temperature)}°C and soil moisture is ${formatReading(it.soilMoisture)}%." }.orEmpty()
+            }
+
+            lower.contains("crop") || lower.contains("plant") || lower.contains("tomato") -> {
+                "Tomatoes are well suited to a managed greenhouse. Use a sunny location, support each plant early, and avoid large swings in soil moisture. " +
+                    data?.let { "Your latest soil moisture is ${formatReading(it.soilMoisture)}%." }.orEmpty()
+            }
+
+            else -> {
+                "I can help with tomato growing, temperature, humidity, sunlight, and the four soil-moisture sensors. " +
+                    data?.let { "I currently see ${formatReading(it.temperature)}°C and ${formatReading(it.humidity)}% humidity." }.orEmpty()
+            }
         }
-    }
 
-    private fun buildStatusResponse(id: String, timestamp: Long): ChatMessage {
         return ChatMessage(
-            id = id,
-            text = "Live sensor data isn't connected yet.\n\n" +
-                    "Once your greenhouse sensors are linked, I'll be able to show temperature, humidity, soil moisture, and incoming sunlight readings here.\n\n" +
-                    "You can still ask me for general growing advice in the meantime.",
+            id = UUID.randomUUID().toString(),
+            text = responseText,
             sender = "bot",
-            timestamp = timestamp,
-            isAnalysis = true,
-            recommendations = listOf(
-                "Connect your sensor hub to enable live monitoring",
-                "Keep sensors calibrated for accurate readings",
-                "Check device connections regularly"
-            )
+            timestamp = System.currentTimeMillis(),
+            isAnalysis = data != null
         )
     }
 
-    private fun buildCropResponse(id: String, timestamp: Long): ChatMessage {
-        return ChatMessage(
-            id = id,
-            text = "Once your sensors are connected, I can recommend crops based on your current greenhouse conditions.\n\n" +
-                    "In the meantime, these crops are commonly suited to greenhouse growing:\n\n" +
-                    "Tomatoes - warm-season crop, great for greenhouses\n" +
-                    "Lettuce - grows well in cooler greenhouse conditions\n" +
-                    "Basil - thrives with consistent warmth and sunlight\n" +
-                    "Peppers - do well in warm, humid environments",
-            sender = "bot",
-            timestamp = timestamp,
-            recommendations = listOf(
-                "Plant tomatoes in rows with 18-inch spacing",
-                "Harvest lettuce before bolting in warm weather",
-                "Pinch basil tips regularly for bushier growth",
-                "Use companion planting with basil and peppers"
-            )
-        )
+    private fun localSoilResponse(data: SensorData?): String {
+        if (data == null) {
+            return "I have not received a live soil reading yet. Tomatoes generally do best with evenly moist, well-drained soil rather than letting it swing between very dry and soggy."
+        }
+
+        val probes = data.soilSensors.take(SOIL_SENSOR_COUNT)
+        val probeText = probes.mapIndexed { index, reading ->
+            "S${index + 1} ${formatReading(reading)}%"
+        }.joinToString(", ")
+        val action = when {
+            data.soilMoisture < 45.0 -> "The overall reading is low, so check irrigation and water gradually if the soil is actually dry."
+            data.soilMoisture > 70.0 -> "The overall reading is high, so check drainage and avoid adding more water until the root zone has time to dry slightly."
+            else -> "The overall reading is within a typical target band; keep the watering schedule consistent."
+        }
+
+        return "Latest overall soil moisture is ${formatReading(data.soilMoisture)}%. " +
+            (if (probeText.isBlank()) "The individual probes have not reported yet. " else "Probe readings: $probeText. ") +
+            action
     }
 
-    private fun buildSoilResponse(id: String, timestamp: Long): ChatMessage {
-        return ChatMessage(
-            id = id,
-            text = "Live soil moisture data isn't connected yet.\n\n" +
-                    "The ideal soil moisture range is 40-70% for most greenhouse crops. Once your moisture sensor is linked, I can analyze your current reading and recommend watering adjustments.",
-            sender = "bot",
-            timestamp = timestamp,
-            isAnalysis = true,
-            recommendations = listOf(
-                "Water early morning for best absorption",
-                "Use mulch to retain soil moisture",
-                "Check drainage to prevent waterlogging",
-                "Calibrate the moisture sensor after installation"
-            )
-        )
+    private fun localTemperatureResponse(data: SensorData?): String {
+        if (data == null) {
+            return "I have not received a live temperature reading yet. Tomatoes commonly grow well around 18–28°C, with good ventilation during warmer periods."
+        }
+
+        val action = when {
+            data.temperature < 18.0 -> "This is cool for active tomato growth; protect plants from cold stress if it continues."
+            data.temperature > 28.0 -> "This is warm; increase ventilation or shade during the hottest part of the day if needed."
+            else -> "This is within a typical tomato-growing range."
+        }
+        return "Latest temperature is ${formatReading(data.temperature)}°C. $action"
     }
 
-    private fun buildTemperatureResponse(id: String, timestamp: Long): ChatMessage {
-        return ChatMessage(
-            id = id,
-            text = "Live temperature data isn't connected yet.\n\n" +
-                    "Most greenhouse vegetables thrive between 18-28°C. Once your temperature sensor is linked, I can compare your current reading against this optimal range and suggest adjustments.",
-            sender = "bot",
-            timestamp = timestamp,
-            isAnalysis = true,
-            recommendations = listOf(
-                "Maintain good ventilation to avoid overheating",
-                "Monitor for sudden temperature fluctuations",
-                "Use shade cloth during peak sun hours"
-            )
-        )
-    }
+    private fun formatReading(value: Double): String = String.format(Locale.US, "%.1f", value)
 
-    private fun buildGrowthResponse(id: String, timestamp: Long): ChatMessage {
-        return ChatMessage(
-            id = id,
-            text = "Growth Optimization Tips:\n\n" +
-                    "Once your sensors are connected, I can tailor these tips to your greenhouse's actual conditions.\n\n" +
-                    "• Keep temperature between 18-28°C for most crops\n" +
-                    "• Maintain soil moisture around 40-70%\n" +
-                    "• Ensure good ventilation for healthy transpiration",
-            sender = "bot",
-            timestamp = timestamp,
-            recommendations = listOf(
-                "Prune lower leaves to improve air circulation",
-                "Use trellising for vining crops like tomatoes",
-                "Apply balanced fertilizer every 2 weeks",
-                "Maintain consistent watering schedule",
-                "Monitor for pests weekly"
-            )
-        )
-    }
-
-    private fun buildSystemResponse(id: String, timestamp: Long): ChatMessage {
-        return ChatMessage(
-            id = id,
-            text = "System Status:\n\n" +
-                    "Live device and sensor data isn't connected yet.\n\n" +
-                    "Once connected, I'll show the status of your temperature, humidity, soil moisture, and incoming sunlight sensors, along with the irrigation and ventilation systems.",
-            sender = "bot",
-            timestamp = timestamp,
-            isAnalysis = true,
-            recommendations = listOf(
-                "Calibrate soil moisture sensor after setup",
-                "Clean the sunlight sensor lens periodically",
-                "Check irrigation lines for blockages",
-                "Update firmware when available"
-            )
-        )
-    }
-
-    private fun buildHelpResponse(id: String, timestamp: Long): ChatMessage {
-        return ChatMessage(
-            id = id,
-            text = "I can help you with:\n\n" +
-                    "• System Status - Check all sensor readings and device status\n" +
-                    "• Crop Advice - Get recommendations on what to grow\n" +
-                    "• Soil Analysis - Monitor and optimize soil moisture\n" +
-                    "• Temperature - Track and manage greenhouse temperature\n" +
-                    "• Growth Tips - Learn how to maximize your yield\n" +
-                    "• System Health - Verify all devices are working properly\n\n" +
-                    "Try asking about any of these topics!",
-            sender = "bot",
-            timestamp = timestamp
-        )
-    }
-
-    private fun buildDefaultResponse(id: String, timestamp: Long): ChatMessage {
-        return ChatMessage(
-            id = id,
-            text = "I'm not sure I understand that question. I can help with system status, crop advice, soil moisture, temperature monitoring, growth tips, and system health. Try asking about one of these topics!",
-            sender = "bot",
-            timestamp = timestamp
-        )
+    private companion object {
+        const val MAX_CONVERSATION_MESSAGES = 10
+        const val SOIL_SENSOR_COUNT = 4
     }
 }

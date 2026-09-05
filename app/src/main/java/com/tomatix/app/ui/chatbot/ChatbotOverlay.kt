@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -56,10 +55,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.tomatix.app.R
 import com.tomatix.app.data.model.ChatMessage
 import com.tomatix.app.ui.theme.Green400
 import com.tomatix.app.ui.theme.Green600
@@ -93,7 +94,7 @@ fun ChatbotOverlay(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().imePadding()) {
         AnimatedVisibility(
             visible = isOpen,
             enter = slideInVertically(initialOffsetY = { it }),
@@ -103,35 +104,13 @@ fun ChatbotOverlay(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.8f)
-                    .padding(horizontal = 0.dp)
-                    .navigationBarsPadding(),
+                    .fillMaxHeight(0.8f),
                 shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
                 colors = CardDefaults.cardColors(containerColor = White),
                 elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     ChatHeader(onClose = { viewModel.toggleOpen() })
-
-                    if (messages.size <= 1) {
-                        FlowRow(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            quickActions.forEach { action ->
-                                QuickActionChip(
-                                    label = action.label,
-                                    onClick = {
-                                        viewModel.updateInput(action.query)
-                                        viewModel.sendMessage()
-                                    }
-                                )
-                            }
-                        }
-                    }
 
                     LazyColumn(
                         state = listState,
@@ -142,6 +121,27 @@ fun ChatbotOverlay(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp)
                     ) {
+                        if (messages.size <= 1) {
+                            item {
+                                FlowRow(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    quickActions.forEach { action ->
+                                        QuickActionChip(
+                                            label = action.label,
+                                            onClick = {
+                                                viewModel.updateInput(action.query)
+                                                viewModel.sendMessage()
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
                         items(messages) { message ->
                             MessageBubble(message = message)
                         }
@@ -187,10 +187,10 @@ fun ChatbotOverlay(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Send,
-                        contentDescription = "Chat",
-                        tint = White,
-                        modifier = Modifier.size(24.dp)
+                        painter = painterResource(R.drawable.tomatix_ai_mark),
+                        contentDescription = "Open Tomi assistant",
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(40.dp)
                     )
 
                     Box(
@@ -228,15 +228,22 @@ private fun ChatHeader(onClose: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Icon(
+                    painter = painterResource(R.drawable.tomatix_ai_mark),
+                    contentDescription = null,
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(40.dp)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "AI Assistant",
+                        text = "Tomi",
                         color = White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Smart",
+                        text = "English · Filipino · Bisaya · Hiligaynon · Kinaray-a",
                         color = Green400,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
@@ -406,8 +413,7 @@ private fun ChatInput(
         modifier = Modifier
             .fillMaxWidth()
             .background(White)
-            .padding(horizontal = 12.dp, vertical = 10.dp)
-            .imePadding(),
+            .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         OutlinedTextField(

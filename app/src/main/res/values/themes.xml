@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.Tomatix" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- Shown while the app's Compose interface is starting. -->
+    <style name="Theme.Tomatix.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#0F3D2E</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/tomatix_splash_icon</item>
+        <item name="windowSplashScreenIconBackgroundColor">#0F3D2E</item>
+        <item name="postSplashScreenTheme">@style/Theme.Tomatix</item>
+    </style>
 </resources>

@@ -40,6 +40,7 @@ Runs on **Android Studio** using **Material 3** design with the signature green 
 - Chat panel sits above the bottom navigation and controls so the input box never covers them
 - Smart responses analyzing sensor conditions: crop recommendations, soil moisture advice, temperature tuning, growth optimization
 - Recommendation cards + simulated typing indicator
+- Live AI responses via Google's free-tier Gemini Flash-Lite API, with built-in local growing guidance when no API key is configured
 
 ---
 
@@ -95,6 +96,16 @@ com.tomatix.app/
 4. Click **Run ▶**
 
 The app starts with **empty data** — sensor cards, trends, analytics, and logs show "No data" / `--` until live data arrives from Firebase Realtime Database.
+
+### Enable the AI assistant
+
+Tomi uses the no-cost Gemini API free tier with the `gemini-3.5-flash-lite` model. Create a free key in [Google AI Studio](https://aistudio.google.com/app/apikey), then add it to `local.properties` (which should stay out of source control):
+
+```properties
+GEMINI_API_KEY=your_google_ai_studio_key
+```
+
+The free tier has request limits. If the key is absent, the assistant continues to provide the app's local greenhouse guidance.
 
 ### Build from command line
 ```bash

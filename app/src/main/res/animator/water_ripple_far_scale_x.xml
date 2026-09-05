@@ -1,0 +1,1 @@
+<objectAnimator xmlns:android="http://schemas.android.com/apk/res/android" android:startOffset="170" android:duration="900" android:interpolator="@android:interpolator/fast_out_slow_in" android:propertyName="scaleX" android:valueFrom="0.75" android:valueTo="1.28" android:valueType="floatType" />

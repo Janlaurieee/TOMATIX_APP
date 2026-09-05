@@ -3,19 +3,41 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Kept in Android's adaptive-icon safe zone. -->
     <group
         android:scaleX="0.5"
         android:scaleY="0.5"
         android:translateX="27"
         android:translateY="27">
+        <!-- The two-lobed silhouette stays recognisable at launcher-icon sizes. -->
         <path
-            android:fillColor="#FF16A34A"
-            android:pathData="M54,8C54,8 30,20 30,52C30,64 36,72 42,78C48,84 60,84 66,78C72,72 78,64 78,52C78,20 54,8 54,8Z" />
+            android:fillColor="#FFF04438"
+            android:pathData="M54,24C42,17 25,24 21,43C16,66 30,87 54,91C78,87 92,66 87,43C83,24 66,17 54,24Z" />
         <path
-            android:fillColor="#FF15803D"
-            android:pathData="M54,8C54,8 44,14 40,26C44,22 50,20 54,20C58,20 64,22 68,26C64,14 54,8 54,8Z" />
+            android:fillColor="#FFD92D28"
+            android:pathData="M54,31C66,20 81,31 80,47C79,66 68,80 54,85Z" />
         <path
-            android:fillColor="#FF22C55E"
-            android:pathData="M54,48m-14,0a14,14 0,1 1,28 0a14,14 0,1 1,-28 0" />
+            android:fillColor="#FFFF7A66"
+            android:pathData="M33,36C26,44 27,59 33,65C35,67 38,65 38,62C35,54 36,47 40,41C42,37 37,33 33,36Z" />
+        <path
+            android:fillColor="#FF6DD44A"
+            android:pathData="M54,25L46,15L51,16L54,7L57,16L65,12L61,22L72,25L64,30L54,27L44,31L36,26L47,23Z" />
+        <path
+            android:fillColor="#FFB5F17F"
+            android:pathData="M54,7C56,12 58,17 59,22L55,24L51,23C52,17 53,12 54,7Z" />
+        <!-- Subtle embedded circuit network gives the tomato its technology touch. -->
+        <path
+            android:strokeColor="#FFB9F7E1"
+            android:strokeWidth="2.4"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:fillColor="@android:color/transparent"
+            android:pathData="M48,37L48,48L40,56M48,48L60,48L68,40M60,48L60,63L69,72" />
+        <path
+            android:fillColor="#FFB9F7E1"
+            android:pathData="M44.5,37a3.5,3.5 0,1 0,7,0a3.5,3.5 0,1 0,-7,0M36.5,56a3.5,3.5 0,1 0,7,0a3.5,3.5 0,1 0,-7,0M64.5,40a3.5,3.5 0,1 0,7,0a3.5,3.5 0,1 0,-7,0M65.5,72a3.5,3.5 0,1 0,7,0a3.5,3.5 0,1 0,-7,0M56.5,63a3.5,3.5 0,1 0,7,0a3.5,3.5 0,1 0,-7,0" />
+        <path
+            android:fillColor="#FFECFFFA"
+            android:pathData="M47,36a1,1 0,1 0,2,0a1,1 0,1 0,-2,0M39,55a1,1 0,1 0,2,0a1,1 0,1 0,-2,0M67,39a1,1 0,1 0,2,0a1,1 0,1 0,-2,0M68,71a1,1 0,1 0,2,0a1,1 0,1 0,-2,0M59,62a1,1 0,1 0,2,0a1,1 0,1 0,-2,0" />
     </group>
 </vector>

@@ -181,6 +181,8 @@ private fun ChemicalDistributionCard(
     uiState: ControlsUiState,
     viewModel: ControlsViewModel
 ) {
+    val controlsEnabled = uiState.chemicalDistributionStatus
+
     Card(
         shape = cardShape,
         colors = CardDefaults.cardColors(containerColor = White),
@@ -201,6 +203,7 @@ private fun ChemicalDistributionCard(
             Spacer(modifier = Modifier.height(8.dp))
             ChemicalTypeDropdown(
                 selected = uiState.chemicalType,
+                enabled = controlsEnabled,
                 onSelect = viewModel::setChemicalType
             )
 
@@ -211,6 +214,7 @@ private fun ChemicalDistributionCard(
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedTextField(
                 value = uiState.mixingTime.toString(),
+                enabled = controlsEnabled,
                 onValueChange = { value ->
                     value.toIntOrNull()?.let { viewModel.setMixingTime(it) }
                 },
@@ -232,6 +236,7 @@ private fun ChemicalDistributionCard(
             Spacer(modifier = Modifier.height(8.dp))
             Slider(
                 value = uiState.concentration.toFloat(),
+                enabled = controlsEnabled,
                 onValueChange = { viewModel.setConcentration(it.toInt()) },
                 valueRange = 0f..100f,
                 colors = SliderDefaults.colors(
@@ -268,7 +273,7 @@ private fun ChemicalDistributionCard(
                 ) {
                     Button(
                         onClick = viewModel::startMixing,
-                        enabled = !uiState.isMixing,
+                        enabled = controlsEnabled && !uiState.isMixing,
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(containerColor = Orange500),
                         shape = RoundedCornerShape(10.dp)
@@ -277,7 +282,7 @@ private fun ChemicalDistributionCard(
                     }
                     Button(
                         onClick = viewModel::pauseMixing,
-                        enabled = uiState.isMixing && !uiState.isMixingPaused,
+                        enabled = controlsEnabled && uiState.isMixing && !uiState.isMixingPaused,
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(containerColor = Yellow500),
                         shape = RoundedCornerShape(10.dp)
@@ -291,7 +296,7 @@ private fun ChemicalDistributionCard(
                 ) {
                     Button(
                         onClick = viewModel::resumeMixing,
-                        enabled = uiState.isMixingPaused,
+                        enabled = controlsEnabled && uiState.isMixingPaused,
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(containerColor = Green500),
                         shape = RoundedCornerShape(10.dp)
@@ -300,7 +305,7 @@ private fun ChemicalDistributionCard(
                     }
                     Button(
                         onClick = viewModel::stopMixing,
-                        enabled = uiState.isMixing || uiState.isMixingPaused,
+                        enabled = controlsEnabled && (uiState.isMixing || uiState.isMixingPaused),
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(containerColor = Red500),
                         shape = RoundedCornerShape(10.dp)
@@ -330,6 +335,7 @@ private fun ChemicalDistributionCard(
 @Composable
 private fun ChemicalTypeDropdown(
     selected: String,
+    enabled: Boolean,
     onSelect: (String) -> Unit
 ) {
     val options = listOf("Fertilizer", "Pesticide", "Herbicide", "Fungicide")
@@ -337,10 +343,11 @@ private fun ChemicalTypeDropdown(
 
     ExposedDropdownMenuBox(
         expanded = expanded,
-        onExpandedChange = { expanded = it }
+        onExpandedChange = { if (enabled) expanded = it }
     ) {
         OutlinedTextField(
             value = selected,
+            enabled = enabled,
             onValueChange = {},
             readOnly = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },

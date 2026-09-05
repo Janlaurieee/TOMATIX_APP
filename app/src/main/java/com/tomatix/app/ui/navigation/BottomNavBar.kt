@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -58,6 +59,7 @@ fun BottomNavBar(navController: NavController) {
 
                 Row(
                     modifier = Modifier
+                        .then(if (isSelected) Modifier.weight(1f, fill = false) else Modifier)
                         .clip(RoundedCornerShape(22.dp))
                         .background(
                             if (isSelected) Green600 else Color.Transparent
@@ -90,6 +92,8 @@ fun BottomNavBar(navController: NavController) {
                         Text(
                             text = screen.label,
                             style = MaterialTheme.typography.labelLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                             color = White
                         )
                     }

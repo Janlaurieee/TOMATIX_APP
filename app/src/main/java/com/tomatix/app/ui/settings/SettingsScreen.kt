@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -72,6 +74,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.tomatix.app.ui.theme.*
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -380,16 +386,17 @@ private fun NumberInput(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun AnalyticsTab(viewModel: SettingsViewModel) {
     var showDatePicker by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState()
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale.getDefault()) }
 
     Column(modifier = Modifier.padding(16.dp)) {
-        Row(
+        FlowRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             listOf("day", "week", "month", "year").forEach { range ->
                 FilterChip(
@@ -402,16 +409,19 @@ private fun AnalyticsTab(viewModel: SettingsViewModel) {
                     )
                 )
             }
-            Spacer(modifier = Modifier.weight(1f))
-            OutlinedButton(onClick = { showDatePicker = true }) {
-                Icon(
-                    imageVector = Icons.Filled.CalendarMonth,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(viewModel.analyticsDate.toString())
-            }
+        }
+
+        OutlinedButton(
+            onClick = { showDatePicker = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = Icons.Filled.CalendarMonth,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(viewModel.analyticsDate.format(dateFormatter))
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -483,13 +493,19 @@ private fun AnalyticsTab(viewModel: SettingsViewModel) {
     }
 
     if (showDatePicker) {
+        // Material date pickers represent calendar dates at midnight UTC.
+        val selectedDateMillis = viewModel.analyticsDate
+            .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDateMillis,
+            initialDisplayedMonthMillis = selectedDateMillis
+        )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
-                TextButton(onClick = {
+                TextButton(enabled = datePickerState.selectedDateMillis != null, onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        val instant = java.time.Instant.ofEpochMilli(millis)
-                        val date = java.time.LocalDate.ofInstant(instant, java.time.ZoneId.systemDefault())
+                        val date = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
                         viewModel.onDateSelected(date)
                     }
                     showDatePicker = false
@@ -761,22 +777,22 @@ private fun LogsTab(viewModel: SettingsViewModel) {
                     color = Gray800
                 )
                 Text(
-                    text = "${viewModel.mockLogs.size} entries",
+                    text = "${viewModel.logs.size} entries",
                     style = MaterialTheme.typography.bodySmall,
                     color = Gray500
                 )
                 Spacer(modifier = Modifier.height(12.dp))
 
-                if (viewModel.mockLogs.isEmpty()) {
+                if (viewModel.logs.isEmpty()) {
                     Text(
                         text = "No records yet.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Gray500
                     )
                 } else {
-                    viewModel.mockLogs.forEach { log ->
+                    viewModel.logs.forEach { log ->
                         LogEntry(log)
-                        if (log != viewModel.mockLogs.last()) {
+                        if (log != viewModel.logs.last()) {
                             Spacer(modifier = Modifier.height(4.dp))
                         }
                     }

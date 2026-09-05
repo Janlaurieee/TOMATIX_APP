@@ -153,4 +153,8 @@ class FirebaseService @Inject constructor() {
     suspend fun addLog(log: SystemLog) {
         logsRef?.push()?.setValue(log)
     }
+
+    suspend fun clearLogs() {
+        logsRef?.removeValue()
+    }
 }

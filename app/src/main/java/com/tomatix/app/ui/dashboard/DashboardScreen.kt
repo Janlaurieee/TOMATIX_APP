@@ -78,6 +78,7 @@ import com.tomatix.app.ui.theme.Gray600
 import com.tomatix.app.ui.theme.Gray700
 import com.tomatix.app.ui.theme.Orange100
 import com.tomatix.app.ui.theme.Orange500
+import com.tomatix.app.ui.theme.Purple500
 import com.tomatix.app.ui.theme.Red500
 import com.tomatix.app.ui.theme.White
 import com.tomatix.app.ui.theme.Yellow100
@@ -126,7 +127,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                    val columns = if (maxWidth >= 700.dp) 3 else 2
+                    val cols = if (this.maxWidth >= 700.dp) 3 else 2
                     val items = listOf(
                         SensorItem(
                             title = "Temperature",
@@ -161,7 +162,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
                         )
                     )
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items.chunked(columns).forEach { rowItems ->
+                        items.chunked(cols).forEach { rowItems ->
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 rowItems.forEach { item ->
                                     SensorCard(
@@ -169,7 +170,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
                                         item = item
                                     )
                                 }
-                                repeat(columns - rowItems.size) {
+                                repeat(cols - rowItems.size) {
                                     Spacer(modifier = Modifier.weight(1f))
                                 }
                             }
@@ -192,6 +193,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
                 deviceStatus = deviceStatus,
                 alpha = alpha,
                 onPumpToggle = viewModel::togglePump,
+                onIrrigationToggle = viewModel::toggleIrrigation,
                 onFanToggle = viewModel::toggleFan,
                 onCameraToggle = viewModel::toggleCamera
             )
@@ -367,26 +369,26 @@ private fun SoilMoistureSection(viewModel: DashboardViewModel, sensorData: Senso
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "12 sensors grouped in 4 plots",
+                text = "4 soil moisture sensors",
                 style = MaterialTheme.typography.bodySmall,
                 color = Gray500
             )
             Spacer(Modifier.height(12.dp))
 
             BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                val columns = if (maxWidth >= 600.dp) 2 else 1
+                val cols = if (this.maxWidth >= 600.dp) 4 else 2
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    (1..4).chunked(columns).forEach { rowPlots ->
+                    (0 until 4).toList().chunked(cols).forEach { rowSensors ->
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            rowPlots.forEach { plotIndex ->
-                                PlotCard(
+                            rowSensors.forEach { sensorIndex ->
+                                SoilSensorBox(
                                     modifier = Modifier.weight(1f),
-                                    viewModel = viewModel,
-                                    plotIndex = plotIndex,
-                                    sensors = sensors
+                                    sensorName = "Sensor ${sensorIndex + 1}",
+                                    value = sensors.getOrNull(sensorIndex),
+                                    trend = viewModel.getTrend(sensors.getOrNull(sensorIndex)?.toFloat(), 45f, 65f)
                                 )
                             }
-                            repeat(columns - rowPlots.size) {
+                            repeat(cols - rowSensors.size) {
                                 Spacer(modifier = Modifier.weight(1f))
                             }
                         }
@@ -398,63 +400,14 @@ private fun SoilMoistureSection(viewModel: DashboardViewModel, sensorData: Senso
 }
 
 @Composable
-private fun PlotCard(
+private fun SoilSensorBox(
     modifier: Modifier = Modifier,
-    viewModel: DashboardViewModel,
-    plotIndex: Int,
-    sensors: List<Double>
+    sensorName: String,
+    value: Double?,
+    trend: TrendDirection
 ) {
     Card(
-        modifier = modifier.border(1.dp, Green100, RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Green50),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .background(Green100),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Grass,
-                        contentDescription = null,
-                        tint = Green600,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = "Plot $plotIndex",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Green600
-                )
-            }
-            Spacer(Modifier.height(10.dp))
-            for (i in 0 until 3) {
-                val index = (plotIndex - 1) * 3 + i
-                val value = sensors.getOrNull(index)
-                SoilSensorBox(
-                    sensorName = "sensor${index + 1}",
-                    value = value,
-                    trend = viewModel.getTrend(value?.toFloat(), 45f, 65f)
-                )
-                if (i < 2) {
-                    Spacer(Modifier.height(8.dp))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun SoilSensorBox(sensorName: String, value: Double?, trend: TrendDirection) {
-    Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .border(1.dp, Green100, RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp),
@@ -569,6 +522,7 @@ private fun QuickControlsSection(
     deviceStatus: DeviceStatus?,
     alpha: Float,
     onPumpToggle: () -> Unit,
+    onIrrigationToggle: () -> Unit,
     onFanToggle: () -> Unit,
     onCameraToggle: () -> Unit
 ) {
@@ -595,6 +549,15 @@ private fun QuickControlsSection(
                 backgroundColor = Blue100,
                 accentColor = Blue500,
                 onToggle = onPumpToggle
+            )
+            Spacer(Modifier.height(8.dp))
+            QuickControlRow(
+                icon = Icons.Filled.WaterDrop,
+                label = "Irrigation",
+                checked = deviceStatus?.irrigationStatus == true,
+                backgroundColor = Green100,
+                accentColor = Green500,
+                onToggle = onIrrigationToggle
             )
             Spacer(Modifier.height(8.dp))
             QuickControlRow(
@@ -764,11 +727,11 @@ private fun TrendsSection(viewModel: DashboardViewModel, alpha: Float) {
             )
             Spacer(Modifier.height(12.dp))
 
-            val tempData = remember { viewModel.getTemperatureHistory() }
-            val humidData = remember { viewModel.getHumidityHistory() }
-            val soilData = remember { viewModel.getSoilMoistureHistory() }
+            val tempData = viewModel.getTemperatureHistory()
+            val humidData = viewModel.getHumidityHistory()
+            val soilSensorData = viewModel.getSoilSensorHistories()
 
-            if (tempData.isEmpty() && humidData.isEmpty() && soilData.isEmpty()) {
+            if (tempData.isEmpty() && humidData.isEmpty() && soilSensorData.all { it.isEmpty() }) {
                 Text(
                     text = "No data available yet.",
                     style = MaterialTheme.typography.bodyMedium,
@@ -789,7 +752,7 @@ private fun TrendsSection(viewModel: DashboardViewModel, alpha: Float) {
                 ) {
                     ChartLegend(color = Orange500, label = "Temp")
                     ChartLegend(color = Blue500, label = "Humidity")
-                    ChartLegend(color = Green500, label = "Soil")
+                    ChartLegend(color = Green500, label = "Soil sensors below")
                 }
                 Spacer(Modifier.height(8.dp))
                 MiniLineChart(
@@ -800,13 +763,48 @@ private fun TrendsSection(viewModel: DashboardViewModel, alpha: Float) {
                         .height(80.dp)
                 )
                 Spacer(Modifier.height(8.dp))
-                MiniLineChart(
-                    data = soilData,
-                    lineColor = Green500,
+                Text(
+                    text = "Soil moisture by sensor",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Gray700,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(Modifier.height(8.dp))
+                MultiLineChart(
+                    series = soilSensorData,
+                    colors = listOf(Green500, Blue500, Orange500, Purple500),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(80.dp)
+                        .height(150.dp)
                 )
+                Spacer(Modifier.height(8.dp))
+                SoilSensorLegend()
+            }
+        }
+    }
+}
+
+@Composable
+private fun SoilSensorLegend() {
+    val labels = listOf(
+        Green500 to "Sensor 1",
+        Blue500 to "Sensor 2",
+        Orange500 to "Sensor 3",
+        Purple500 to "Sensor 4"
+    )
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val columns = if (maxWidth >= 360.dp) 4 else 2
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            labels.chunked(columns).forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    row.forEach { (color, label) ->
+                        ChartLegend(
+                            color = color,
+                            label = label,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                    }
+                }
             }
         }
     }
@@ -855,8 +853,55 @@ private fun MiniLineChart(
 }
 
 @Composable
-private fun ChartLegend(color: Color, label: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+private fun MultiLineChart(
+    series: List<List<DataPoint>>,
+    colors: List<Color>,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier) {
+        val visibleSeries = series.filter { it.isNotEmpty() }
+        if (visibleSeries.isEmpty()) return@Canvas
+
+        val values = visibleSeries.flatten().map { it.value }
+        val minValue = values.min()
+        val maxValue = values.max()
+        val range = (maxValue - minValue).coerceAtLeast(0.01f)
+        val chartHeight = size.height - 8.dp.toPx()
+
+        for (lineIndex in series.indices) {
+            val data = series[lineIndex]
+            if (data.isEmpty()) continue
+            val path = Path()
+            val stepX = size.width / (data.size - 1).coerceAtLeast(1)
+
+            data.forEachIndexed { index, point ->
+                val x = index * stepX
+                val y = 4.dp.toPx() + chartHeight - ((point.value - minValue) / range * chartHeight)
+                if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+            }
+
+            val color = colors.getOrElse(lineIndex) { Green500 }
+            drawPath(
+                path = path,
+                color = color,
+                style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round)
+            )
+            data.lastOrNull()?.let { last ->
+                val lastX = (data.size - 1) * stepX
+                val lastY = 4.dp.toPx() + chartHeight - ((last.value - minValue) / range * chartHeight)
+                drawCircle(color = color, radius = 4.dp.toPx(), center = Offset(lastX, lastY))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChartLegend(
+    color: Color,
+    label: String,
+    modifier: Modifier = Modifier
+) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         Box(
             modifier = Modifier
                 .size(8.dp)

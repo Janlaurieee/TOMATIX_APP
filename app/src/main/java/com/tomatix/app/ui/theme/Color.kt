@@ -3,14 +3,14 @@ package com.tomatix.app.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // Primary Green
-val Green50 = Color(0xFFF0FDF4)
-val Green100 = Color(0xFFDCFCE7)
-val Green200 = Color(0xFFBBF7D0)
-val Green300 = Color(0xFF86EFAC)
-val Green400 = Color(0xFF4ADE80)
-val Green500 = Color(0xFF22C55E)
-val Green600 = Color(0xFF16A34A)
-val Green700 = Color(0xFF15803D)
+val Green50 = Color(0xFFF1FAF3)
+val Green100 = Color(0xFFE1F5E5)
+val Green200 = Color(0xFFC7EBCB)
+val Green300 = Color(0xFF9CDAA3)
+val Green400 = Color(0xFF71C978)
+val Green500 = Color(0xFF59B962)
+val Green600 = Color(0xFF45A852)
+val Green700 = Color(0xFF368B42)
 val Green800 = Color(0xFF166534)
 val Green900 = Color(0xFF14532D)
 
@@ -64,4 +64,4 @@ val Gray900 = Color(0xFF111827)
 
 // Surface
 val White = Color(0xFFFFFFFF)
-val Background = Color(0xFFF8FAF5)
+val Background = Color(0xFFF7FAF8)

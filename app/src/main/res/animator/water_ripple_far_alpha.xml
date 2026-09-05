@@ -1,0 +1,1 @@
+<objectAnimator xmlns:android="http://schemas.android.com/apk/res/android" android:startOffset="170" android:duration="450" android:propertyName="alpha" android:repeatCount="1" android:repeatMode="reverse" android:valueFrom="0" android:valueTo="0.42" android:valueType="floatType" />

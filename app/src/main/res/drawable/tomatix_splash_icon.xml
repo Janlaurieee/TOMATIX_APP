@@ -1,0 +1,11 @@
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android" android:drawable="@drawable/tomatix_ai_mark">
+    <target android:name="tomato_mark" android:animation="@animator/tomato_splash_scale_x" />
+    <target android:name="tomato_mark" android:animation="@animator/tomato_splash_scale_y" />
+    <target android:name="tomato_mark" android:animation="@animator/tomato_splash_fade" />
+    <target android:name="water_ripple_near" android:animation="@animator/water_ripple_near_scale_x" />
+    <target android:name="water_ripple_near" android:animation="@animator/water_ripple_near_scale_y" />
+    <target android:name="water_ripple_near" android:animation="@animator/water_ripple_near_alpha" />
+    <target android:name="water_ripple_far" android:animation="@animator/water_ripple_far_scale_x" />
+    <target android:name="water_ripple_far" android:animation="@animator/water_ripple_far_scale_y" />
+    <target android:name="water_ripple_far" android:animation="@animator/water_ripple_far_alpha" />
+</animated-vector>

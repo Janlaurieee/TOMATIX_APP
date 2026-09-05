@@ -47,7 +47,7 @@ class SettingsViewModel @Inject constructor(
     var analyticsDate by mutableStateOf(LocalDate.now())
         private set
 
-    var mockLogs by mutableStateOf(emptyList<SystemLog>())
+    var logs by mutableStateOf(emptyList<SystemLog>())
         private set
 
     var lastSensorData by mutableStateOf<SensorData?>(null)
@@ -58,6 +58,15 @@ class SettingsViewModel @Inject constructor(
             repository.getSensorData().collect { data ->
                 lastSensorData = data
             }
+        }
+        viewModelScope.launch {
+            repository.getThresholdSettings().collect { thresholds = it }
+        }
+        viewModelScope.launch {
+            repository.getNotificationSettings().collect { notifications = it }
+        }
+        viewModelScope.launch {
+            repository.getLogs().collect { logs = it }
         }
     }
 
@@ -75,19 +84,39 @@ class SettingsViewModel @Inject constructor(
 
     fun updateThresholds(newThresholds: ThresholdSettings) {
         thresholds = newThresholds
+        repository.saveThresholdSettingsLocally(newThresholds)
     }
 
-    fun saveThresholds() {}
+    fun saveThresholds() {
+        viewModelScope.launch {
+            repository.updateThresholdSettings(thresholds)
+            addLog("Environmental thresholds saved", "success")
+        }
+    }
 
     fun resetThresholds() {
         thresholds = ThresholdSettings()
+        viewModelScope.launch {
+            repository.updateThresholdSettings(thresholds)
+            addLog("Environmental thresholds reset to defaults", "info")
+        }
     }
 
     fun updateNotifications(newNotifications: NotificationSettings) {
+        if (notifications == newNotifications) return
         notifications = newNotifications
+        viewModelScope.launch {
+            repository.updateNotificationSettings(newNotifications)
+            addLog("Notification preferences changed", "info")
+        }
     }
 
-    fun saveNotifications() {}
+    fun saveNotifications() {
+        viewModelScope.launch {
+            repository.updateNotificationSettings(notifications)
+            addLog("Notification preferences saved", "success")
+        }
+    }
 
     fun onTabSelected(tab: Int) {
         selectedTab = tab
@@ -101,18 +130,20 @@ class SettingsViewModel @Inject constructor(
         analyticsDate = date
     }
 
-    fun exportLogs() {}
+    fun exportLogs() {
+        viewModelScope.launch { addLog("System logs exported", "info") }
+    }
 
     fun clearLogs() {
-        mockLogs = emptyList()
+        viewModelScope.launch { repository.clearLogs() }
     }
 
     fun buildSensorCsv(): String {
         val sb = StringBuilder()
         sb.append("Timestamp,Temperature (C),Humidity (%),Incoming Sunlight (k lux),")
-        for (i in 1..12) {
+        for (i in 1..4) {
             sb.append("sensor$i (%)")
-            if (i < 12) sb.append(',')
+            if (i < 4) sb.append(',')
         }
         sb.append('\n')
 
@@ -124,10 +155,10 @@ class SettingsViewModel @Inject constructor(
         sb.append(s?.temperature?.let { formatValue(it) } ?: "").append(',')
         sb.append(s?.humidity?.let { formatValue(it) } ?: "").append(',')
         sb.append(s?.lightIntensity?.let { formatValue(it / 1000.0) } ?: "").append(',')
-        for (i in 0 until 12) {
+        for (i in 0 until 4) {
             val value = s?.soilSensors?.getOrNull(i)
             sb.append(value?.let { formatValue(it) } ?: "")
-            if (i < 11) sb.append(',')
+            if (i < 3) sb.append(',')
         }
         sb.append('\n')
         return sb.toString()
@@ -135,6 +166,16 @@ class SettingsViewModel @Inject constructor(
 
     private fun formatValue(value: Double): String =
         String.format(Locale.US, "%.1f", value)
+
+    private suspend fun addLog(event: String, type: String) {
+        repository.addLog(
+            SystemLog(
+                time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                event = event,
+                type = type
+            )
+        )
+    }
 
     private fun generateSensorAnalytics(seed: String): SensorAnalytics {
         return SensorAnalytics(

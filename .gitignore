@@ -1,5 +1,8 @@
 *.iml
 .gradle
+.gradle-user/
+.gradle-user-home/
+.android-user/
 local.properties
 .idea
 .DS_Store
