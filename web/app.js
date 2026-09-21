@@ -9,6 +9,11 @@ const state = {
   humidity: [],
   light: [],
   soilSensors: Array(SENSOR_COUNT).fill(null),
+  devices: {},
+  tomato: {
+    detected: false,
+    count: null,
+  },
 };
 
 const colors = {
@@ -117,6 +122,7 @@ async function loadSensors() {
   const latestTomato = temperatureHumidity.at(-1) || {};
   const count = readNumber(latestTomato, ["ripeTomatoCount", "ripe_tomato_count", "tomatoCount", "detections"]);
   const detected = Boolean(latestTomato.ripeTomatoDetected || latestTomato.ripe_tomato_detected || count > 0);
+  state.tomato = { detected, count };
   $("tomatoValue").textContent = detected ? count || "Detected" : "None";
   $("tomatoHint").textContent = detected ? "Ready for checking" : "No ripe tomato detected";
 
@@ -165,6 +171,7 @@ function renderPlots() {
 
 async function loadDevices() {
   const devices = await fetchJson("devices");
+  state.devices = devices || {};
   setDevice("pumpStatus", devices?.pumpStatus);
   setDevice("irrigationStatus", devices?.irrigationStatus);
   setDevice("fanStatus", devices?.fanStatus);
@@ -241,6 +248,113 @@ function drawLine(ctx, values, color, padding, chartWidth, chartHeight) {
   ctx.fill();
 }
 
+function currentSensorContext() {
+  return {
+    temperature: state.temperature.at(-1) ?? null,
+    humidity: state.humidity.at(-1) ?? null,
+    incomingSunlight: state.light.at(-1) ?? null,
+    soilSensors: state.soilSensors,
+    tomato: state.tomato,
+    devices: state.devices,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function initChat() {
+  const chatToggle = $("chatToggle");
+  const chatClose = $("chatClose");
+  const chatPanel = $("chatPanel");
+  const chatForm = $("chatForm");
+  const chatInput = $("chatInput");
+
+  if (!chatToggle || !chatClose || !chatPanel || !chatForm || !chatInput) return;
+
+  function setOpen(isOpen) {
+    chatPanel.classList.toggle("open", isOpen);
+    chatToggle.setAttribute("aria-expanded", String(isOpen));
+    if (isOpen) chatInput.focus();
+  }
+
+  chatToggle.addEventListener("click", () => setOpen(!chatPanel.classList.contains("open")));
+  chatClose.addEventListener("click", () => setOpen(false));
+  chatForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const message = chatInput.value.trim();
+    if (!message) return;
+
+    appendChatMessage(message, "user");
+    chatInput.value = "";
+    chatInput.disabled = true;
+
+    const thinking = appendChatMessage("Checking the greenhouse readings...", "bot");
+    try {
+      const answer = await askAssistant(message);
+      thinking.textContent = answer;
+    } catch (error) {
+      console.error(error);
+      thinking.textContent = buildLocalGuidance(message, currentSensorContext());
+    } finally {
+      chatInput.disabled = false;
+      chatInput.focus();
+    }
+  });
+}
+
+function appendChatMessage(text, sender) {
+  const messages = $("chatMessages");
+  const item = document.createElement("div");
+  item.className = `chat-message ${sender}`;
+  item.textContent = text;
+  messages.appendChild(item);
+  messages.scrollTop = messages.scrollHeight;
+  return item;
+}
+
+async function askAssistant(message) {
+  const response = await fetch("/api/chat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message,
+      context: currentSensorContext(),
+    }),
+  });
+  if (!response.ok) throw new Error(`Assistant request failed: ${response.status}`);
+  const data = await response.json();
+  return data.reply || buildLocalGuidance(message, currentSensorContext());
+}
+
+function buildLocalGuidance(message, context) {
+  const text = message.toLowerCase();
+  const notes = [];
+  if (Number.isFinite(context.temperature)) {
+    if (context.temperature < 21) notes.push(`Temperature is low at ${context.temperature.toFixed(1)}°C; check heating and airflow.`);
+    else if (context.temperature > 27) notes.push(`Temperature is high at ${context.temperature.toFixed(1)}°C; improve ventilation or shading.`);
+    else notes.push(`Temperature is within range at ${context.temperature.toFixed(1)}°C.`);
+  }
+  if (Number.isFinite(context.humidity)) {
+    if (context.humidity < 60) notes.push(`Humidity is low at ${context.humidity.toFixed(1)}%; misting or irrigation may help.`);
+    else if (context.humidity > 70) notes.push(`Humidity is high at ${context.humidity.toFixed(1)}%; watch for fungal risk and increase airflow.`);
+    else notes.push(`Humidity is in the ideal range at ${context.humidity.toFixed(1)}%.`);
+  }
+  const soilValues = context.soilSensors.filter(Number.isFinite);
+  if (soilValues.length) {
+    const average = soilValues.reduce((sum, value) => sum + value, 0) / soilValues.length;
+    if (average < 50) notes.push(`Soil moisture average is low at ${average.toFixed(1)}%; inspect irrigation.`);
+    else if (average > 75) notes.push(`Soil moisture average is high at ${average.toFixed(1)}%; avoid overwatering.`);
+    else notes.push(`Soil moisture average is healthy at ${average.toFixed(1)}%.`);
+  }
+  if (context.tomato.detected || text.includes("ripe")) {
+    notes.push(context.tomato.detected ? "A ripe tomato is detected and ready for checking." : "No ripe tomato is detected in the latest reading.");
+  }
+  return notes.length
+    ? notes.join(" ")
+    : "I am connected to the same Tomatix readings as the dashboard. Ask about temperature, humidity, sunlight, soil moisture, devices, or ripe tomatoes.";
+}
+
 window.addEventListener("resize", drawTrendChart);
+initChat();
 loadDashboard();
 setInterval(loadDashboard, 30000);
