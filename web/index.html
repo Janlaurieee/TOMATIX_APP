@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tomatix Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Tomatix navigation">
+        <div class="brand">
+          <div class="brand-mark">T</div>
+          <div>
+            <p class="eyebrow">Smart Greenhouse</p>
+            <h1>Tomatix</h1>
+          </div>
+        </div>
+
+        <nav class="nav-list" aria-label="Main">
+          <a class="nav-item active" href="#dashboard">Dashboard</a>
+          <a class="nav-item" href="#sensors">Sensors</a>
+          <a class="nav-item" href="#plots">Plots</a>
+          <a class="nav-item" href="#devices">Devices</a>
+        </nav>
+
+        <div class="sidebar-status">
+          <span class="status-dot" id="connectionDot"></span>
+          <div>
+            <strong id="connectionLabel">Connecting</strong>
+            <span id="lastUpdated">Waiting for Firebase</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main" id="dashboard">
+        <section class="hero-panel">
+          <div>
+            <p class="eyebrow">Greenhouse Overview</p>
+            <h2>Monitor your tomatoes from any browser.</h2>
+            <p class="hero-copy">Realtime conditions, device status, and trend history from your Firebase database.</p>
+          </div>
+          <div class="hero-visual" aria-hidden="true">
+            <div class="greenhouse-frame">
+              <div class="sun"></div>
+              <div class="plant-row">
+                <span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="metric-grid" id="sensors" aria-label="Sensor readings">
+          <article class="metric-card temperature">
+            <div class="metric-icon">°C</div>
+            <p>Temperature</p>
+            <strong id="temperatureValue">--</strong>
+            <span>Ideal 21-27°C</span>
+          </article>
+          <article class="metric-card humidity">
+            <div class="metric-icon">%</div>
+            <p>Humidity</p>
+            <strong id="humidityValue">--</strong>
+            <span>Ideal 60-70%</span>
+          </article>
+          <article class="metric-card sunlight">
+            <div class="metric-icon">lx</div>
+            <p>Incoming Sunlight</p>
+            <strong id="lightValue">--</strong>
+            <span>Ideal 21-27 k lux</span>
+          </article>
+          <article class="metric-card tomatoes">
+            <div class="metric-icon">✓</div>
+            <p>Ripe Tomatoes</p>
+            <strong id="tomatoValue">--</strong>
+            <span id="tomatoHint">Detection status</span>
+          </article>
+        </section>
+
+        <section class="dashboard-grid">
+          <article class="panel trend-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Last 24 Readings</p>
+                <h3>Temperature, Humidity, and Sunlight</h3>
+              </div>
+            </div>
+            <canvas id="trendCanvas" width="1200" height="420" aria-label="Combined trend chart"></canvas>
+            <div class="legend">
+              <span><i class="legend-dot temp"></i>Temperature</span>
+              <span><i class="legend-dot humid"></i>Humidity</span>
+              <span><i class="legend-dot light"></i>Incoming Sunlight</span>
+            </div>
+          </article>
+
+          <article class="panel devices-panel" id="devices">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Device Status</p>
+                <h3>Controls</h3>
+              </div>
+            </div>
+            <div class="device-list">
+              <div class="device-row"><span>Water Pump</span><strong id="pumpStatus">--</strong></div>
+              <div class="device-row"><span>Irrigation</span><strong id="irrigationStatus">--</strong></div>
+              <div class="device-row"><span>Exhaust Fan</span><strong id="fanStatus">--</strong></div>
+              <div class="device-row"><span>Camera</span><strong id="cameraStatus">--</strong></div>
+            </div>
+          </article>
+        </section>
+
+        <section class="panel" id="plots">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Soil Moisture</p>
+              <h3>4 plots, 8 sensors</h3>
+            </div>
+          </div>
+          <div class="plot-grid" id="plotGrid"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
