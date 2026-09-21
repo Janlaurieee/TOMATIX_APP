@@ -11,9 +11,9 @@ function localGuidance(message, context = {}) {
   const tomato = context.tomato || {};
 
   if (Number.isFinite(temperature)) {
-    if (temperature < 21) notes.push(`Temperature is low at ${temperature.toFixed(1)}°C. Check heating and reduce cold airflow.`);
-    else if (temperature > 27) notes.push(`Temperature is high at ${temperature.toFixed(1)}°C. Improve ventilation, shading, or fan use.`);
-    else notes.push(`Temperature is ideal at ${temperature.toFixed(1)}°C.`);
+    if (temperature < 21) notes.push(`Temperature is low at ${temperature.toFixed(1)} C. Check heating and reduce cold airflow.`);
+    else if (temperature > 27) notes.push(`Temperature is high at ${temperature.toFixed(1)} C. Improve ventilation, shading, or fan use.`);
+    else notes.push(`Temperature is ideal at ${temperature.toFixed(1)} C.`);
   }
 
   if (Number.isFinite(humidity)) {
@@ -62,12 +62,15 @@ async function handler(request, response) {
     "",
     `User question: ${message}`,
     "Sensor context:",
-    numberLine("Temperature", Number(context.temperature), "°C"),
+    numberLine("Temperature", Number(context.temperature), " C"),
     numberLine("Humidity", Number(context.humidity), "%"),
     numberLine("Incoming sunlight", Number(context.incomingSunlight), " k lux"),
     `Soil sensors: ${Array.isArray(context.soilSensors) ? context.soilSensors.join(", ") : "no readings"}`,
     `Tomato detection: ${context.tomato?.detected ? "ripe tomato detected" : "none detected"}`,
     `Devices: ${JSON.stringify(context.devices || {})}`,
+    `Manual controls: ${JSON.stringify(context.controls || {})}`,
+    `Thresholds: ${JSON.stringify(context.thresholds || {})}`,
+    `Notifications: ${JSON.stringify(context.notifications || {})}`,
   ].join("\n");
 
   try {

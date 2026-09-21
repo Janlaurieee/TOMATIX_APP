@@ -22,9 +22,9 @@
 
         <nav class="nav-list" aria-label="Main">
           <a class="nav-item active" href="#dashboard">Dashboard</a>
-          <a class="nav-item" href="#sensors">Sensors</a>
-          <a class="nav-item" href="#plots">Plots</a>
-          <a class="nav-item" href="#devices">Devices</a>
+          <a class="nav-item" href="#controls">Controls</a>
+          <a class="nav-item" href="#settings">Settings</a>
+          <a class="nav-item" href="#assistant">AI Chat</a>
         </nav>
 
         <div class="sidebar-status">
@@ -55,10 +55,10 @@
 
         <section class="metric-grid" id="sensors" aria-label="Sensor readings">
           <article class="metric-card temperature">
-            <div class="metric-icon">°C</div>
+            <div class="metric-icon">C</div>
             <p>Temperature</p>
             <strong id="temperatureValue">--</strong>
-            <span>Ideal 21-27°C</span>
+            <span>Ideal 21-27 C</span>
           </article>
           <article class="metric-card humidity">
             <div class="metric-icon">%</div>
@@ -73,7 +73,7 @@
             <span>Ideal 21-27 k lux</span>
           </article>
           <article class="metric-card tomatoes">
-            <div class="metric-icon">✓</div>
+            <div class="metric-icon">OK</div>
             <p>Ripe Tomatoes</p>
             <strong id="tomatoValue">--</strong>
             <span id="tomatoHint">Detection status</span>
@@ -104,10 +104,10 @@
               </div>
             </div>
             <div class="device-list">
-              <div class="device-row"><span>Water Pump</span><strong id="pumpStatus">--</strong></div>
-              <div class="device-row"><span>Irrigation</span><strong id="irrigationStatus">--</strong></div>
-              <div class="device-row"><span>Exhaust Fan</span><strong id="fanStatus">--</strong></div>
-              <div class="device-row"><span>Camera</span><strong id="cameraStatus">--</strong></div>
+              <div class="device-row"><span>Water Pump</span><strong id="pumpStatus">--</strong><button type="button" data-quick-toggle="pumpStatus">Toggle</button></div>
+              <div class="device-row"><span>Irrigation</span><strong id="irrigationStatus">--</strong><button type="button" data-quick-toggle="irrigationStatus">Toggle</button></div>
+              <div class="device-row"><span>Exhaust Fan</span><strong id="fanStatus">--</strong><button type="button" data-quick-toggle="fanStatus">Toggle</button></div>
+              <div class="device-row"><span>Camera</span><strong id="cameraStatus">--</strong><button type="button" data-quick-toggle="cameraStatus">Toggle</button></div>
             </div>
           </article>
         </section>
@@ -121,9 +121,192 @@
           </div>
           <div class="plot-grid" id="plotGrid"></div>
         </section>
+
+        <section class="panel section-panel" id="controls">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Manual Controls</p>
+              <h3>Manage irrigation, ventilation, camera, and chemical systems</h3>
+            </div>
+          </div>
+
+          <div class="control-grid">
+            <article class="control-card chemical-card">
+              <div class="control-card-heading">
+                <span class="control-icon orange">OK</span>
+                <div>
+                  <h4>Chemical Distribution</h4>
+                  <p>Mix and distribute chemicals</p>
+                </div>
+              </div>
+              <label class="field-label" for="chemicalDistributionToggle">Chemical Distribution</label>
+              <label class="switch-row">
+                <span id="chemicalDistributionText">Distribution Off</span>
+                <input id="chemicalDistributionToggle" type="checkbox" data-device-toggle="chemicalDistributionStatus" />
+              </label>
+              <label class="field-label" for="chemicalType">Chemical Type</label>
+              <select id="chemicalType">
+                <option>Fertilizer</option>
+                <option>Pesticide</option>
+                <option>Herbicide</option>
+                <option>Fungicide</option>
+              </select>
+              <label class="field-label" for="mixingTime">Mixing Time (minutes)</label>
+              <input id="mixingTime" type="number" min="1" value="30" />
+              <label class="field-label" for="concentration">Concentration: <strong id="concentrationValue">25%</strong></label>
+              <input id="concentration" type="range" min="0" max="100" value="25" />
+              <div class="timer-card" id="mixingTimer">00:00 Ready</div>
+              <div class="button-grid">
+                <button class="action-button orange" type="button" data-mix-action="start">Start Mix</button>
+                <button class="action-button yellow" type="button" data-mix-action="pause">Pause</button>
+                <button class="action-button green" type="button" data-mix-action="resume">Resume</button>
+                <button class="action-button red" type="button" data-mix-action="reset">Reset</button>
+              </div>
+              <div class="safety-note">Always wear protective equipment. Ensure proper ventilation and follow chemical handling protocols.</div>
+            </article>
+
+            <article class="control-card">
+              <div class="control-card-heading">
+                <span class="control-icon indigo">CAM</span>
+                <div>
+                  <h4>Camera Module</h4>
+                  <p>Monitor your farm in real time</p>
+                </div>
+              </div>
+              <div class="camera-feed">Camera Feed</div>
+              <label class="field-label" for="cameraZoom">Zoom: <strong id="cameraZoomValue">100%</strong></label>
+              <input id="cameraZoom" type="range" min="50" max="400" value="100" />
+              <div class="button-grid">
+                <button class="action-button indigo" type="button" data-log-action="Camera snapshot requested">Snapshot</button>
+                <button class="action-button blue" type="button" data-log-action="Camera feed refreshed">Refresh</button>
+                <button class="action-button soft" type="button" data-log-action="Camera moved left">Pan Left</button>
+                <button class="action-button soft" type="button" data-log-action="Camera moved right">Pan Right</button>
+              </div>
+            </article>
+
+            <article class="control-card">
+              <div class="control-card-heading">
+                <span class="control-icon blue">H2O</span>
+                <div>
+                  <h4>Water Pump</h4>
+                  <p>Control water supply</p>
+                </div>
+              </div>
+              <label class="switch-row">
+                <span id="pumpControlText">Pump Off</span>
+                <input id="pumpControl" type="checkbox" data-device-toggle="pumpStatus" />
+              </label>
+              <label class="field-label" for="pumpSpeed">Speed: <strong id="pumpSpeedValue">50%</strong></label>
+              <input id="pumpSpeed" type="range" min="0" max="100" value="50" />
+            </article>
+
+            <article class="control-card">
+              <div class="control-card-heading">
+                <span class="control-icon green">IR</span>
+                <div>
+                  <h4>Irrigation</h4>
+                  <p>Quick irrigation cycles</p>
+                </div>
+              </div>
+              <label class="switch-row">
+                <span id="irrigationControlText">Irrigation Off</span>
+                <input id="irrigationControl" type="checkbox" data-device-toggle="irrigationStatus" />
+              </label>
+              <div class="button-grid">
+                <button class="action-button green" type="button" data-cycle="quick">Quick</button>
+                <button class="action-button blue" type="button" data-cycle="medium">Medium</button>
+                <button class="action-button indigo" type="button" data-cycle="deep">Deep</button>
+              </div>
+            </article>
+
+            <article class="control-card">
+              <div class="control-card-heading">
+                <span class="control-icon purple">FAN</span>
+                <div>
+                  <h4>Exhaust Fan</h4>
+                  <p>Ventilation control</p>
+                </div>
+              </div>
+              <label class="switch-row">
+                <span id="fanControlText">Fan Off</span>
+                <input id="fanControl" type="checkbox" data-device-toggle="fanStatus" />
+              </label>
+              <label class="field-label" for="fanSpeed">Speed: <strong id="fanSpeedValue">60%</strong></label>
+              <input id="fanSpeed" type="range" min="0" max="100" value="60" />
+            </article>
+
+            <article class="control-card emergency-card">
+              <div class="control-card-heading">
+                <span class="control-icon red">!</span>
+                <div>
+                  <h4>Emergency Controls</h4>
+                  <p>Immediately stop or reset all systems</p>
+                </div>
+              </div>
+              <button class="action-button red full" type="button" id="stopAll">Stop All</button>
+              <button class="action-button dark full" type="button" id="resetControls">Reset to Default</button>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel section-panel" id="settings">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Settings</p>
+              <h3>Thresholds, analytics, notifications, and system logs</h3>
+            </div>
+          </div>
+
+          <div class="settings-grid">
+            <article class="settings-card">
+              <h4>Environmental Thresholds</h4>
+              <div class="threshold-grid" id="thresholdGrid"></div>
+              <div class="button-row">
+                <button class="action-button green" type="button" id="saveThresholds">Save Changes</button>
+                <button class="action-button soft" type="button" id="resetThresholds">Reset to Default</button>
+              </div>
+            </article>
+
+            <article class="settings-card">
+              <h4>Analytics</h4>
+              <div class="range-tabs" id="analyticsRanges">
+                <button class="active" type="button" data-range="day">Day</button>
+                <button type="button" data-range="week">Week</button>
+                <button type="button" data-range="month">Month</button>
+                <button type="button" data-range="year">Year</button>
+              </div>
+              <input id="analyticsDate" type="date" />
+              <div class="analytics-grid" id="analyticsGrid"></div>
+              <button class="action-button green full" type="button" id="saveData">Save Data</button>
+            </article>
+
+            <article class="settings-card">
+              <h4>Notification Preferences</h4>
+              <label class="switch-row"><span>Email Notification</span><input type="checkbox" id="notifyEmail" /></label>
+              <label class="switch-row"><span>Push Notification</span><input type="checkbox" id="notifyPush" /></label>
+              <label class="switch-row"><span>SMS Notification</span><input type="checkbox" id="notifySms" /></label>
+              <label class="switch-row"><span>Critical Only</span><input type="checkbox" id="notifyCritical" /></label>
+              <button class="action-button green full" type="button" id="saveNotifications">Save Preferences</button>
+            </article>
+
+            <article class="settings-card logs-card">
+              <div class="panel-heading compact">
+                <div>
+                  <h4>System Logs</h4>
+                  <p id="logCount">0 entries</p>
+                </div>
+              </div>
+              <div class="logs-list" id="logsList"></div>
+              <div class="button-row">
+                <button class="action-button soft" type="button" id="exportLogs">Export Logs</button>
+                <button class="action-button red" type="button" id="clearLogs">Clear History</button>
+              </div>
+            </article>
+          </div>
+        </section>
       </main>
 
-      <section class="chat-shell" id="chatShell" aria-label="Tomi AI assistant">
+      <section class="chat-shell" id="assistant" aria-label="Tomi AI assistant">
         <button class="chat-toggle" id="chatToggle" type="button" aria-expanded="false">
           <span>AI</span>
           <strong>Ask Tomi</strong>
@@ -134,7 +317,7 @@
               <p class="eyebrow">AI Assistant</p>
               <h3>Tomi</h3>
             </div>
-            <button class="chat-close" id="chatClose" type="button" aria-label="Close chat">×</button>
+            <button class="chat-close" id="chatClose" type="button" aria-label="Close chat">x</button>
           </div>
           <div class="chat-messages" id="chatMessages">
             <div class="chat-message bot">
